@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2018-11-10T14:50:45
+# Project created by QtCreator 2018-11-11T04:50:53
 #
 #-------------------------------------------------
 
@@ -26,15 +26,21 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+    airplane.cpp \
+    airport.cpp \
+    controller.cpp
 
 HEADERS += \
-        mainwindow.h
+    airplane.h \
+    airport.h \
+    controller.h
 
-FORMS += \
-        mainwindow.ui
+FORMS +=
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    TODO
