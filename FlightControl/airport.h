@@ -5,7 +5,8 @@
 
 class Airport : public QGraphicsEllipseItem{
 
-
+public:
+    Airport();
 };
 
 #endif // AIRPORT_H

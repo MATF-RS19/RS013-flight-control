@@ -7,6 +7,7 @@
 #include <QtMath>
 #include <QDebug>
 #include <QTimer>
+#include <QGraphicsScene>
 
 class Airplane: public QObject, public QGraphicsEllipseItem{
     Q_OBJECT

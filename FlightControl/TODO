@@ -1,6 +1,7 @@
-TODO:
+-plane AI (avoid collisions)
 
--plane collision
 -more complex plane movement (follow a specific path)
+
 -spawn planes automaticaly (outside the view)
+
 -optimize plane land and refuel order

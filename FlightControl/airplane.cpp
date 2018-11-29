@@ -38,7 +38,7 @@ void Airplane::move()
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
 
     // If plane arrived at target, take some time to refuel than go back to origin
-    if(toTarget <= 10){
+    if(toTarget <= 5){
         timer->start(1000);
         inFlight = false;
         refuel();
@@ -65,6 +65,21 @@ void Airplane::move()
         delete this;
     }
 
+    // Check if the plane collided with other planes and if so, destroy all planes that collided
+    QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this);
+    if(!crashedPlanes.empty()){
+        bool crashed = false;
+        foreach(QGraphicsItem* item, crashedPlanes){
+            if(item == this) continue;
+            Airplane* plane = dynamic_cast<Airplane*>(item);
+            if(plane){
+              crashed = true;
+              delete plane;
+            }
+        }
+        if(crashed)
+            delete this;
+    }
 
 }
 

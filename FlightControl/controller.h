@@ -20,6 +20,9 @@ public:
 private:
     QGraphicsScene* scene;
     Airport* airport;
+
+    const static int width;
+    const static int height;
 };
 
 #endif // CONTROLLER_H
