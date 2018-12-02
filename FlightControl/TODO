@@ -1,7 +1,5 @@
 -plane AI (avoid collisions)
 
--more complex plane movement (follow a specific path)
-
 -spawn planes automaticaly (outside the view)
 
 -optimize plane land and refuel order

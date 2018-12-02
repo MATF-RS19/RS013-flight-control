@@ -12,7 +12,7 @@
 class Controller : public QGraphicsView
 {
 public:
-    Controller();
+    Controller(int width, int height);
 
     void run();
     void mousePressEvent(QMouseEvent* event);

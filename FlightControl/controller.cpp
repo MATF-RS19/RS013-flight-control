@@ -1,10 +1,6 @@
 #include "controller.h"
 
-
-const int Controller::width = 600;
-const int Controller::height = 600;
-
-Controller::Controller()
+Controller::Controller(int width, int height)
 {
     // Create the scene
     scene = new QGraphicsScene(this);
@@ -29,7 +25,8 @@ void Controller::mousePressEvent(QMouseEvent *event)
 {
     // Spawn a new airplane on the clicked location (this is for testing purposes)
     if(event->button() == Qt::LeftButton){
-        Airplane* air = new Airplane(mapToScene(event->pos()), airport->pos(), 1000);
-        scene->addItem(air);
+        Airplane* plane = new Airplane(mapToScene(event->pos()), airport->pos(), 1000);
+        airport->planes.push_back(plane);
+        scene->addItem(plane);
     }
 }
