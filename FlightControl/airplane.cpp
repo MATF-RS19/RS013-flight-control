@@ -68,6 +68,7 @@ void Airplane::move(){
     if(state == CRASHED) return;
 
     // Move the plane forward
+    qDebug() << pos();
     setPos(pos() - direction * speed);
     fuel -= fuelUse;
 
@@ -114,6 +115,7 @@ void Airplane::update(){
 
 void Airplane::moveToTarget(){
 
+//    qDebug() << pos();
     // If plane arrived at target, land and refuel
     QPointF d = pos() - target;
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
@@ -122,14 +124,28 @@ void Airplane::moveToTarget(){
         state = LANDING;
     }
 
-    // Update direction vector of the plane
-    if(qAtan2(direction.x(), direction.y()) -
-       qAtan2(d.x()/toTarget, d.y()/toTarget) < 0){
-        steer(-0.025);
-    }else{
-        steer(0.025);
+    double a = direction.y();
+    double b = -direction.x();
+    double c = direction.x() * y() - direction.y() * x();
+    double f = a * target.x() + b * target.y() + c;
+
+    double dot = d.x() * direction.x() + d.y() * direction.y();
+    double d_norm = toTarget;
+    double dir_norm = qSqrt(direction.x() * direction.x() + direction.y() * direction.y());
+
+    double pam = dot / (d_norm * dir_norm);
+//    qDebug() << x() << " " << y();
+    if(pam > 1) pam = 1;
+    if(pam < -1) pam = -1;
+    double angle = acos(pam);
+    /*qDebug() << angle;
+    qDebug() << d_norm;
+    qDebug() << dir_norm;*/
+    if(f > 0) {
+        steer(angle);
+    } else {
+        steer(-angle);
     }
-    //BUG
 
 }
 
@@ -153,6 +169,7 @@ void Airplane::landAndRefuel(){
 
 void Airplane::steer(double theta)
 {
+    qDebug() << "theta: " << theta;
     double x = qCos(theta) * direction.x() - qSin(theta) * direction.y();
     double y = qSin(theta) * direction.x() + qCos(theta) * direction.y();
 
