@@ -3,6 +3,7 @@
 const double Airplane::fuelCap = 1000;
 const double Airplane::fuelUse = 1;
 const double Airplane::speed = 2.5;
+const double Airplane::maxAngle = 0.05;
 int Airplane::nOfPlanes = 0;
 
 Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
@@ -16,7 +17,6 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     setTarget(target);
     this->fuel = fuel;
     state = FLYING;
-    theta = 0;
     incoming = true;
 
     flightNo = nOfPlanes++;
@@ -68,7 +68,6 @@ void Airplane::move(){
     if(state == CRASHED) return;
 
     // Move the plane forward
-    qDebug() << pos();
     setPos(pos() - direction * speed);
     fuel -= fuelUse;
 
@@ -115,7 +114,6 @@ void Airplane::update(){
 
 void Airplane::moveToTarget(){
 
-//    qDebug() << pos();
     // If plane arrived at target, land and refuel
     QPointF d = pos() - target;
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
@@ -124,6 +122,7 @@ void Airplane::moveToTarget(){
         state = LANDING;
     }
 
+    // Determine if the plane should steer left or right
     double a = direction.y();
     double b = -direction.x();
     double c = direction.x() * y() - direction.y() * x();
@@ -134,13 +133,10 @@ void Airplane::moveToTarget(){
     double dir_norm = qSqrt(direction.x() * direction.x() + direction.y() * direction.y());
 
     double pam = dot / (d_norm * dir_norm);
-//    qDebug() << x() << " " << y();
     if(pam > 1) pam = 1;
     if(pam < -1) pam = -1;
     double angle = acos(pam);
-    /*qDebug() << angle;
-    qDebug() << d_norm;
-    qDebug() << dir_norm;*/
+    if(angle > maxAngle) angle = maxAngle;
     if(f > 0) {
         steer(angle);
     } else {
@@ -169,7 +165,6 @@ void Airplane::landAndRefuel(){
 
 void Airplane::steer(double theta)
 {
-    qDebug() << "theta: " << theta;
     double x = qCos(theta) * direction.x() - qSin(theta) * direction.y();
     double y = qSin(theta) * direction.x() + qCos(theta) * direction.y();
 

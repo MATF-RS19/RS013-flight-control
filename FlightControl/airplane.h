@@ -45,12 +45,11 @@ private:
     void setOrigin(const QPointF origin);
 
     static const double speed;
+    static const double maxAngle;
     static const double fuelCap;
     static const double fuelUse;
 
     double fuel;
-
-    double theta;
 
     State state;
 
