@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+FlightControl.pro.user
+FlightControl.pro.user.*
+
 # Compiled Object files
 *.slo
 *.lo
