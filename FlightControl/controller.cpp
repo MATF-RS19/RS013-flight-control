@@ -1,4 +1,5 @@
 #include "controller.h"
+#include <QPointer>
 
 Controller::Controller(int width, int height)
 {

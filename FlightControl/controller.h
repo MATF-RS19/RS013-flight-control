@@ -20,6 +20,7 @@ public:
 private:
     QGraphicsScene* scene;
     Airport* airport;
+    std::vector<Airplane*> planes;
 
     const static int width;
     const static int height;

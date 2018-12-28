@@ -12,11 +12,11 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     setRect(0,0,10,10);
     setPos(pos);
 
-    // Plane is flying from pos to target, and spawns with some fuel
+    // Plane is State::FLYING from pos to target, and spawns with some fuel
     setOrigin(pos);
     setTarget(target);
     this->fuel = fuel;
-    state = FLYING;
+    state = State::FLYING;
     incoming = true;
 
     flightNo = nOfPlanes++;
@@ -41,7 +41,7 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
 Airplane::~Airplane()
 {
     delete timer;
-    qDebug() << "Flight-" + QString::number(flightNo) + " just crashed";
+    qDebug() << "Flight-" + QString::number(flightNo) + " just State::CRASHED";
 }
 
 State Airplane::getState()
@@ -51,11 +51,22 @@ State Airplane::getState()
 
 void Airplane::setState(State state)
 {
-    if(this->state != CRASHED){
+    if(this->state != State::CRASHED){
 
         this->state = state;
 
     }
+}
+
+double Airplane::getDistance()
+{
+    QPointF d = pos() - target;
+    return qSqrt(d.x() * d.x() + d.y() * d.y());
+}
+
+double Airplane::getFuel()
+{
+    return fuel;
 }
 
 bool Airplane::isIncoming()
@@ -65,21 +76,21 @@ bool Airplane::isIncoming()
 
 void Airplane::move(){
 
-    if(state == CRASHED) return;
+    if(state == State::CRASHED) return;
 
     // Move the plane forward
     setPos(pos() - direction * speed);
     fuel -= fuelUse;
 
-    if(state == FLYING){
+    if(state == State::FLYING){
         moveToTarget();
-    }else if(state == HOLDING){
+    }else if(state == State::HOLDING){
         holdingPattern();
-    }else if(state == LANDING){
+    }else if(state == State::LANDING){
         landAndRefuel();
-    }else if(state == REFUELING){
+    }else if(state == State::REFUELING){
         incoming = !incoming;
-        state = FLYING;
+        state = State::FLYING;
         timer->start(50);
     }
 
@@ -88,28 +99,36 @@ void Airplane::move(){
 
 void Airplane::update(){
 
-    if(state == CRASHED) return;
-
+    if(state == State::CRASHED) {
+        qDebug() << "prvi kresd";
+        qDebug() << flightNo;
+//        deleteLater();
+//        return;
+    }
     // Check if the plane collided with other planes and if so, destroy all planes that collided
     QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this);
-    if(!crashedPlanes.empty()){
-        foreach(QGraphicsItem* item, crashedPlanes){
-            Airplane* plane = dynamic_cast<Airplane*>(item);
-            if(plane && plane->state != CRASHED){
-                plane->setState(CRASHED);
-                state = CRASHED;
-            }
+    foreach(QGraphicsItem* item, crashedPlanes){
+        Airplane* plane = dynamic_cast<Airplane*>(item);
+        if(plane && plane->state != State::CRASHED){
+            plane->setState(State::CRASHED);
+            state = State::CRASHED;
+            plane->deleteLater();
         }
     }
 
+
     // If the fuel runs out, the plane crashes
     if(fuel <= 0){
-        state = CRASHED;
+        state = State::CRASHED;
         qDebug() << "Flight-" + QString::number(flightNo) + " ran out of fuel";
-        return;
+//        return;
     }
 
-
+    if(state == State::CRASHED) {
+        qDebug() << "drugi kresd";
+        qDebug() << flightNo;
+        deleteLater();
+    }
 }
 
 void Airplane::moveToTarget(){
@@ -118,8 +137,9 @@ void Airplane::moveToTarget(){
     QPointF d = pos() - target;
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
 
-    if(toTarget <= 5){
-        state = LANDING;
+    if(toTarget <= 5) {
+//        qDebug() << "aaa";
+        state = State::LANDING;
     }
 
     // Determine if the plane should steer left or right
@@ -159,7 +179,7 @@ void Airplane::landAndRefuel(){
     QPointF t = target;
     setTarget(origin);
     setOrigin(t);
-    state = REFUELING;
+    state = State::REFUELING;
 }
 
 

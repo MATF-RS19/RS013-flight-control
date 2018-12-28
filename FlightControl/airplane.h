@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <QGraphicsScene>
 
-enum State{FLYING, HOLDING, LANDING, REFUELING, CRASHED};
+enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED};
 
 class Airplane: public QObject, public QGraphicsEllipseItem{
     Q_OBJECT
@@ -21,6 +21,8 @@ public:
     void setState(State state);
 
     double getDistance();
+
+    double getFuel();
 
     bool isIncoming();
 

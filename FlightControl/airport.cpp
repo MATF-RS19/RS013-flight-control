@@ -4,7 +4,7 @@ Airport::Airport()
 {
     setRect(0,0,20,20);
 
-    currentPlane = nullptr;
+    radarRadius = 200;
     occupied = false;
 
     // Call update() every 50 miliseconds
@@ -22,41 +22,47 @@ Airport::~Airport()
 
 void Airport::update()
 {
+//    qDebug() << "pre";
 //    qDebug() << planes.length();
-    for(int i=0; i<planes.length(); i++){
 
-        if(planes[i]->getState() == CRASHED){
+    planes.erase(std::remove_if(planes.begin(), planes.end(),
+                                [](const QPointer<Airplane>& p){return p.isNull();}),
+                planes.end());
 
-            if(currentPlane == planes[i]){
-                currentPlane = nullptr;
-                occupied = false;
-            }
-
-            delete planes[i];
-            planes.remove(i);
-
-            qDebug() << planes.length();
-
-        }
-
+//    qDebug() << "posle";
+//    qDebug() << planes.length();
+    if(currentPlane && !currentPlane->isIncoming()) {
+        currentPlane = nullptr;
     }
-
-    if(currentPlane != nullptr){
-
-        //qDebug() << currentPlane->flightNo;
-    }
-
     if(!planes.empty()){
         schedule();
     }
 }
-
-void Airport::schedule()
+double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
 {
+    double totalSum = 0;
+    double guess = 0;
 
+    for(const auto& p : planes) {
+        // 50 - timer...
+        guess += p->getDistance() / 2.5 + 1 / 50;
+        if(p->getFuel() - guess /* *1 */ < 0) return 100000000;
+        // 100 - minimum...
+        double real = p->getFuel() - 100;
+        if(guess > real) {
+            totalSum += guess - real;
+        }
+    }
+
+    return totalSum;
+}
+
+void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
+{
+    if(planesInRadar.size() < 2) return;
     // Sort the planes by the distance from the airport
-    std::sort(planes.begin(), planes.end(),
-              [this] (const Airplane* p1, const Airplane* p2) -> bool
+    std::sort(planesInRadar.begin(), planesInRadar.end(),
+              [this] (const QPointer<Airplane> p1, const QPointer<Airplane> p2) -> bool
     {
         QPointF v1 = p1->pos() - this->pos();
         double d1 = qSqrt(v1.x() * v1.x() + v1.y() * v1.y());
@@ -67,35 +73,55 @@ void Airport::schedule()
     }
               );
 
-    // Some tmp logic, has a bug somewhere
-    for(auto plane : planes){
-        if(!plane->isIncoming()) continue;
-
-        if(currentPlane == nullptr && plane->getState() != CRASHED){
-            currentPlane = plane;
-            currentPlane->setState(FLYING);
-        }
-
-        if(plane != currentPlane){
-            QPointF v = plane->pos() - pos();
-            double dist = qSqrt(v.x() * v.x() + v.y() * v.y());
-
-            if(dist < 200)
-                plane->setState(HOLDING);
+    auto best = planesInRadar;
+    double bestSolution = solutionValue(planesInRadar);
+    for(int i = 0; i < 10; i++) {
+        int index = std::rand() % (planesInRadar.size() - 1);
+        auto current = planesInRadar;
+        std::swap(current[index], current[index + 1]);
+        double currentSolution = solutionValue(current);
+        if(currentSolution < bestSolution) {
+            best = current;
         }
     }
 
-    if(currentPlane != nullptr){
-        if(currentPlane->getState() == LANDING or currentPlane->getState() == REFUELING){
-            occupied = true;
-        }else{
-            if(occupied == true){
-                currentPlane = nullptr;
-                occupied = false;
-            }
-        }
-     }
+    planesInRadar = best;
+}
+
+void Airport::schedule()
+{
+    QVector<QPointer<Airplane>> incomingPlanesInRadar;
+    std::copy_if(planes.begin(), planes.end(),
+                 std::back_inserter(incomingPlanesInRadar),
+                 [this](const QPointer<Airplane>& p){return p->isIncoming() && p->getDistance() < radarRadius;});
 
 
+    if(incomingPlanesInRadar.empty()) {
+        return;
+    }
+
+    localSearch(incomingPlanesInRadar);
+
+    // Sort the planes by the distance from the airport
+//    std::sort(incomingPlanesInRadar.begin(), incomingPlanesInRadar.end(),
+//              [this] (const Airplane* p1, const Airplane* p2) -> bool
+//    {
+//        QPointF v1 = p1->pos() - this->pos();
+//        double d1 = qSqrt(v1.x() * v1.x() + v1.y() * v1.y());
+//        QPointF v2 = p2->pos() - this->pos();
+//        double d2 = qSqrt(v2.x() * v2.x() + v2.y() * v2.y());
+
+//        return d1 < d2;
+//    }
+//              );
+
+    for(const auto& p : incomingPlanesInRadar) {
+        if( p == currentPlane) continue;
+        p->setState(State::HOLDING);
+    }
+    if(!currentPlane) {
+        incomingPlanesInRadar[0]->setState(State::FLYING);
+        currentPlane = incomingPlanesInRadar[0];
+    }
 }
 
