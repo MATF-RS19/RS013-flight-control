@@ -1,7 +1,7 @@
 #include "airplane.h"
 
-const double Airplane::fuelCap = 1000;
 const double Airplane::fuelUse = 1;
+const double Airplane::fuelCap = 1000;
 const double Airplane::speed = 2.5;
 const double Airplane::maxAngle = 0.05;
 int Airplane::nOfPlanes = 0;
@@ -36,12 +36,15 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     connect(this->timer, SIGNAL(timeout()), this, SLOT(move()));
     this->timer->start(50);
 
+
+//    qDebug() << "Spawned a plane at " << pos;
+
 }
 
 Airplane::~Airplane()
 {
     delete timer;
-    qDebug() << "Flight-" + QString::number(flightNo) + " just State::CRASHED";
+//    qDebug() << "Flight-" + QString::number(flightNo) + " just State::CRASHED";
 }
 
 State Airplane::getState()
@@ -74,6 +77,12 @@ bool Airplane::isIncoming()
     return incoming;
 }
 
+double Airplane::calcFuel(QPointF o, QPointF t)
+{
+    QPointF d = o - t;
+    return qSqrt(d.x() * d.x() + d.y() * d.y()) / Airplane::speed;
+}
+
 void Airplane::move(){
 
     if(state == State::CRASHED) return;
@@ -89,6 +98,9 @@ void Airplane::move(){
     }else if(state == State::LANDING){
         landAndRefuel();
     }else if(state == State::REFUELING){
+        if(!incoming){
+            deleteLater();
+        }
         incoming = !incoming;
         state = State::FLYING;
         timer->start(50);
@@ -99,12 +111,6 @@ void Airplane::move(){
 
 void Airplane::update(){
 
-    if(state == State::CRASHED) {
-        qDebug() << "prvi kresd";
-        qDebug() << flightNo;
-//        deleteLater();
-//        return;
-    }
     // Check if the plane collided with other planes and if so, destroy all planes that collided
     QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this);
     foreach(QGraphicsItem* item, crashedPlanes){
@@ -125,8 +131,7 @@ void Airplane::update(){
     }
 
     if(state == State::CRASHED) {
-        qDebug() << "drugi kresd";
-        qDebug() << flightNo;
+        qDebug() << flightNo << "crashed";
         deleteLater();
     }
 }
@@ -174,12 +179,12 @@ void Airplane::holdingPattern(){
 void Airplane::landAndRefuel(){
 
     timer->start(1000);
-    this->fuel = fuelCap;
     qDebug() << "Flight-" + QString::number(flightNo) + " arrived to target";
     QPointF t = target;
     setTarget(origin);
     setOrigin(t);
     state = State::REFUELING;
+    this->fuel = fuelCap;
 }
 
 

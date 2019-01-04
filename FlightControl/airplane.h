@@ -26,9 +26,16 @@ public:
 
     bool isIncoming();
 
+    static double calcFuel(QPointF origin, QPointF target);
+
     int flightNo;
 
     static int nOfPlanes;
+
+    static const double speed;
+    static const double maxAngle;
+    static const double fuelCap;
+    static const double fuelUse;
 
 public slots:
     void update();
@@ -45,11 +52,6 @@ private:
 
     void setTarget(const QPointF target);
     void setOrigin(const QPointF origin);
-
-    static const double speed;
-    static const double maxAngle;
-    static const double fuelCap;
-    static const double fuelUse;
 
     double fuel;
 

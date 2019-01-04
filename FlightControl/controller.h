@@ -6,16 +6,23 @@
 #include <QGraphicsView>
 #include <QMouseEvent>
 #include <QDebug>
+#include <QPointer>
+#include <QTime>
 #include "airplane.h"
 #include "airport.h"
 
-class Controller : public QGraphicsView
-{
+class Controller : public QGraphicsView{
+
+Q_OBJECT
+
 public:
     Controller(int width, int height);
 
     void run();
     void mousePressEvent(QMouseEvent* event);
+
+public slots:
+    void update();
 
 private:
     QGraphicsScene* scene;

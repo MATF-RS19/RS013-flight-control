@@ -45,8 +45,8 @@ double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
 
     for(const auto& p : planes) {
         // 50 - timer...
-        guess += p->getDistance() / 2.5 + 1 / 50;
-        if(p->getFuel() - guess /* *1 */ < 0) return 100000000;
+        guess += p->getDistance() / Airplane::speed + 1 / 50;
+        if(p->getFuel() - guess * Airplane::fuelUse < 0) return 100000000;
         // 100 - minimum...
         double real = p->getFuel() - 100;
         if(guess > real) {
