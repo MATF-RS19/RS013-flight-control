@@ -1,7 +1,7 @@
 ﻿#ifndef AIRPLANE_H
 #define AIRPLANE_H
 
-#include <QGraphicsEllipseItem>
+#include <QGraphicsItem>
 #include <QPointF>
 #include <QObject>
 #include <QtMath>
@@ -11,11 +11,19 @@
 
 enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED};
 
-class Airplane: public QObject, public QGraphicsEllipseItem{
+class Airplane: public QObject, public QGraphicsItem{
     Q_OBJECT
 public:
     Airplane(QPointF pos, const QPointF target, double fuel);
     ~Airplane();
+
+    QRectF boundingRect() const override;
+
+    QPainterPath shape() const override;
+
+    void paint(QPainter *painter,
+               const QStyleOptionGraphicsItem *option,
+               QWidget *widget) override;
 
     State getState();
     void setState(State state);
@@ -65,6 +73,8 @@ private:
 
     // Direction the plane is moving in
     QPointF direction;
+
+    double currentAngle;
 
     QTimer *timer;
 };

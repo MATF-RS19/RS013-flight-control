@@ -1,4 +1,8 @@
 #include "airplane.h"
+#include <QPainter>
+#include <QStyleOption>
+#include <cmath>
+#include <QRectF>
 
 const double Airplane::fuelUse = 1;
 const double Airplane::fuelCap = 1000;
@@ -6,13 +10,27 @@ const double Airplane::speed = 2.5;
 const double Airplane::maxAngle = 0.05;
 int Airplane::nOfPlanes = 0;
 
+static double normalizeAngle(double angle)
+{
+    while (angle < 0) {
+        angle += 360;
+    }
+
+    while (angle > 360) {
+        angle -= 360;
+    }
+
+    return angle;
+}
+
 Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
 {
     // First we draw the plane (a circle for now)
-    setRect(0,0,10,10);
+
     setPos(pos);
 
-    // Plane is State::FLYING from pos to target, and spawns with some fuel
+
+    // Plane is flying from pos to target, and spawns with some fuel
     setOrigin(pos);
     setTarget(target);
     this->fuel = fuel;
@@ -25,6 +43,18 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     direction = pos - target;
     double toTarget = qSqrt(direction.x() * direction.x() + direction.y() * direction.y());
     direction /= toTarget;
+
+    QLineF dir(pos, target);
+    currentAngle = std::acos(dir.dx() / dir.length());
+    if(dir.dy() < 0)
+        currentAngle = 2 * M_PI - currentAngle;
+    currentAngle = qRadiansToDegrees(currentAngle);
+    currentAngle += 90;
+    currentAngle = normalizeAngle(currentAngle);
+    if(currentAngle > 180)
+        currentAngle -= 360;
+    setRotation(currentAngle);
+    qDebug() << currentAngle;
 
     // Call update() every 50 miliseconds
     static QTimer timer;
@@ -45,6 +75,58 @@ Airplane::~Airplane()
 {
     delete timer;
 //    qDebug() << "Flight-" + QString::number(flightNo) + " just State::CRASHED";
+}
+
+QRectF Airplane::boundingRect() const
+{
+    qreal adjust = -0.5;
+    return QRectF(-18 - adjust, -22 - adjust,
+                  36 + adjust, 60 + adjust);
+}
+
+// Funkcija koja vraca preciznije granice misa - radi detekcije kolizije
+QPainterPath Airplane::shape() const
+{
+    QPainterPath path;
+    path.addRect(-10, -20, 20, 40);
+    return path;
+}
+
+void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *)
+{
+    // Crtamo telo
+    painter->setBrush(QColor());
+    painter->drawEllipse(-10, -20, 20, 40);
+
+//    if (QStyleOptionGraphicsItem::
+//            levelOfDetailFromTransform(
+//                painter->worldTransform()
+//            ) >= .75) {
+
+        // Crtamo oci
+        painter->setBrush(Qt::white);
+        painter->drawEllipse(-10, -17, 8, 8);
+        painter->drawEllipse(2, -17, 8, 8);
+
+        // Crtamo nos
+        painter->setBrush(Qt::black);
+        painter->drawEllipse(QRectF(-2, -22, 4, 4));
+
+
+        // Crtamo usi
+        painter->setBrush(scene()->collidingItems(this).isEmpty()
+                ? Qt::darkYellow : Qt::red);
+        painter->drawEllipse(-17, -12, 16, 16);
+        painter->drawEllipse(1, -12, 16, 16);
+
+        // Crtamo rep
+        QPainterPath path(QPointF(0, 20));
+        path.cubicTo(-5, 22, -5, 22, 0, 25);
+        path.cubicTo(5, 27, 5, 32, 0, 30);
+        path.cubicTo(-5, 32, -5, 42, 0, 35);
+        painter->setBrush(Qt::NoBrush);
+        painter->drawPath(path);
+//    }
 }
 
 State Airplane::getState()
@@ -88,7 +170,10 @@ void Airplane::move(){
     if(state == State::CRASHED) return;
 
     // Move the plane forward
-    setPos(pos() - direction * speed);
+    setPos(mapToParent(0, -speed));
+    setRotation(-currentAngle);
+    setScale(0.75);
+//    setPos(pos() - speed * direction);
     fuel -= fuelUse;
 
     if(state == State::FLYING){
@@ -109,7 +194,16 @@ void Airplane::move(){
 
 }
 
-void Airplane::update(){
+void Airplane::update()
+{
+    if(state == State::CRASHED) {
+        qDebug() << "prvi kresd";
+        qDebug() << flightNo;
+//        deleteLater();
+//        return;
+    }
+
+    // TODO: Steer if there are planes dangerously close
 
     // Check if the plane collided with other planes and if so, destroy all planes that collided
     QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this);
@@ -187,7 +281,6 @@ void Airplane::landAndRefuel(){
     this->fuel = fuelCap;
 }
 
-
 void Airplane::steer(double theta)
 {
     double x = qCos(theta) * direction.x() - qSin(theta) * direction.y();
@@ -196,8 +289,31 @@ void Airplane::steer(double theta)
     direction.setX(x);
     direction.setY(y);
 
-}
+    QLineF oldDir(mapToScene(0, -100), mapToScene(0, 0));
+    QLineF newDir(QPointF(0, 0), direction * 100);
 
+    // Angle between previous and current direction vector
+    double angle = oldDir.angleTo(newDir);
+
+//    qDebug() << "prvi";
+//    qDebug() << angle;
+    angle = normalizeAngle(angle);
+//    if(angle > 180) {
+//        angle = angle - 360;
+//    }
+//    qDebug() << "drugi";
+//    qDebug() << angle;
+
+//    if(angle > 359.9 || angle < 0.1) {
+//        angle = 0;
+//    }
+    currentAngle += qSin(qDegreesToRadians(angle)) * 10;
+    currentAngle = normalizeAngle(currentAngle);
+    if(currentAngle > 180)
+        currentAngle -= 360;
+//    qDebug() << rotation();
+//    qDebug() << currentAngle;
+}
 
 void Airplane::setTarget(const QPointF target)
 {

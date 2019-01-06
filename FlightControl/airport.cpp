@@ -75,7 +75,7 @@ void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
 
     auto best = planesInRadar;
     double bestSolution = solutionValue(planesInRadar);
-    for(int i = 0; i < 10; i++) {
+    for(int i = 0; i < 100; i++) {
         int index = std::rand() % (planesInRadar.size() - 1);
         auto current = planesInRadar;
         std::swap(current[index], current[index + 1]);
