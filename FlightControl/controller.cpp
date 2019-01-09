@@ -11,6 +11,8 @@ Controller::Controller(int width, int height)
     fitInView(0,0, width, height, Qt::KeepAspectRatio);
     setFixedSize(width, height);
 
+    focused_plane = nullptr;
+
     // Call update() every 50 miliseconds
     static QTimer t;
     connect(&t, SIGNAL(timeout()), this, SLOT(update()));
@@ -31,15 +33,49 @@ void Controller::run()
 void Controller::mousePressEvent(QMouseEvent *event)
 {
     // Spawn a new airplane on the clicked location (this is for testing purposes)
-    if(event->button() == Qt::LeftButton){
+    if(event->button() == Qt::RightButton){
         Airplane* plane = new Airplane(mapToScene(event->pos()), airport->pos(), Airplane::fuelCap);
         airport->planes.push_back(plane);
         scene->addItem(plane);
+    }else if(event->button() == Qt::LeftButton){
+        foreach (Airplane* plane, airport->planes) {
+            qDebug() << plane->boundingRect();
+            if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){  // Y U NO WORK ???
+                focused_plane = plane;
+                focused_plane->setState(State::MANUAL);
+                qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;
+                break;
+            }
+        }
+    }
+}
+
+void Controller::keyPressEvent(QKeyEvent *event)
+{
+    if(event->key() == Qt::Key_Left){
+        if(focused_plane)
+            focused_plane->steer(-0.025);
+    }else if(event->key() == Qt::Key_Right){
+        if(focused_plane)
+            focused_plane->steer(0.025);
+    }else if(event->key() == Qt::Key_Up){
+        if(focused_plane)
+            if(focused_plane->getState() != State::CRASHED)
+                focused_plane->setState(State::FLYING);
+        focused_plane = nullptr;
+    }else if(event->key() == Qt::Key_Down){
+        // TODO Force selected plane to land
+
     }
 }
 
 void Controller::update()
 {
+    if(focused_plane){
+        if(focused_plane->getState() == State::CRASHED){
+            focused_plane = nullptr;
+        }
+    }
 
     static std::random_device rd;
     static std::mt19937 gen(rd());

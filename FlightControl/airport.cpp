@@ -93,7 +93,7 @@ void Airport::schedule()
     QVector<QPointer<Airplane>> incomingPlanesInRadar;
     std::copy_if(planes.begin(), planes.end(),
                  std::back_inserter(incomingPlanesInRadar),
-                 [this](const QPointer<Airplane>& p){return p->isIncoming() && p->getDistance() < radarRadius;});
+                 [this](const QPointer<Airplane>& p){return p->isIncoming() && p->getDistance() < radarRadius && p->getState() != State::MANUAL;});
 
 
     if(incomingPlanesInRadar.empty()) {

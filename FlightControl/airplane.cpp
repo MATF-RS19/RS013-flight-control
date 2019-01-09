@@ -54,7 +54,7 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     if(currentAngle > 180)
         currentAngle -= 360;
     setRotation(currentAngle);
-    qDebug() << currentAngle;
+    //qDebug() << currentAngle;
 
     // Call update() every 50 miliseconds
     static QTimer timer;
@@ -97,6 +97,7 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     // Crtamo telo
     painter->setBrush(QColor());
     painter->drawEllipse(-10, -20, 20, 40);
+
 
 //    if (QStyleOptionGraphicsItem::
 //            levelOfDetailFromTransform(
@@ -176,7 +177,9 @@ void Airplane::move(){
 //    setPos(pos() - speed * direction);
     fuel -= fuelUse;
 
-    if(state == State::FLYING){
+    if(state == State::MANUAL){
+        return;
+    }else if(state == State::FLYING){
         moveToTarget();
     }else if(state == State::HOLDING){
         holdingPattern();

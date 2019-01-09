@@ -20,6 +20,7 @@ public:
 
     void run();
     void mousePressEvent(QMouseEvent* event);
+    void keyPressEvent(QKeyEvent* event);
 
 public slots:
     void update();
@@ -27,7 +28,9 @@ public slots:
 private:
     QGraphicsScene* scene;
     Airport* airport;
-    std::vector<Airplane*> planes;
+//    std::vector<Airplane*> planes;
+
+    Airplane* focused_plane;
 
     const static int width;
     const static int height;

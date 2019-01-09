@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <QGraphicsScene>
 
-enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED};
+enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED, MANUAL};
 
 class Airplane: public QObject, public QGraphicsItem{
     Q_OBJECT
@@ -45,6 +45,10 @@ public:
     static const double fuelCap;
     static const double fuelUse;
 
+
+    // The function changes the direction of the plane by angle theta
+    void steer(double theta);
+
 public slots:
     void update();
     void move();
@@ -55,8 +59,6 @@ private:
     void holdingPattern();
     void landAndRefuel();
 
-    // The function changes the direction of the plane by angle theta
-    void steer(double theta);
 
     void setTarget(const QPointF target);
     void setOrigin(const QPointF origin);
