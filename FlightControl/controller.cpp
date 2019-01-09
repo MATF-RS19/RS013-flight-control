@@ -100,22 +100,22 @@ void Controller::update()
     }
 
 
-    if(random(gen) > 0.99){
+//    if(random(gen) > 0.99){
 
-        double a = random(gen) * 2 * M_PI;
-        double r = 600;
-        QPoint pos, tar;
-        pos.setX(r * cos(a) + 300);
-        pos.setY(r * sin(a) + 300);
+//        double a = random(gen) * 2 * M_PI;
+//        double r = 600;
+//        QPoint pos, tar;
+//        pos.setX(r * cos(a) + 300);
+//        pos.setY(r * sin(a) + 300);
 
-        a = random(gen) * 2 * M_PI;
-        tar.setX(r * cos(a) + 300);
-        tar.setY(r * sin(a) + 300);
+//        a = random(gen) * 2 * M_PI;
+//        tar.setX(r * cos(a) + 300);
+//        tar.setY(r * sin(a) + 300);
 
-        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
-        scene->addItem(plane);
+//        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
+//        scene->addItem(plane);
 
-    }
+//    }
 
 }
 

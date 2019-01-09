@@ -100,6 +100,15 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     QPixmap img(":/images/01_airplane.png");
     painter->drawPixmap(-20, -20, 40, 50, img);
 
+    painter->drawRect(-15, 30, 30, 5);
+
+    double fuelRatio = fuel / fuelCap;
+    int r = 255 * (1 - fuelRatio);
+    int g = 255 * fuelRatio;
+    int b = 0;
+    painter->setBrush(QColor(r, g, b));
+    painter->drawRect(-15, 30, 30 * fuelRatio, 5);
+
 //    painter->drawRect(boundingRect());
 
 //    painter->drawPolygon(QPolygonF(

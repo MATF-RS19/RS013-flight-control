@@ -40,21 +40,24 @@ void Airport::update()
 }
 double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
 {
-    double totalSum = 0;
-    double guess = 0;
+    double maxFuelWasted = 0;
+    double totalFuel = 0;
 
     for(const auto& p : planes) {
-        // 50 - timer...
-        guess += p->getDistance() / Airplane::speed + 1 / 50;
-        if(p->getFuel() - guess * Airplane::fuelUse < 0) return 100000000;
-        // 100 - minimum...
-        double real = p->getFuel() - 1000;
-        if(guess > real) {
-            totalSum += guess - real;
+        // plane moving straight to airport
+        double optimalFuel = p->getDistance() / Airplane::speed;
+        totalFuel += optimalFuel;
+        // plane is going to run out of fuel
+        if(totalFuel > p->getFuel()) {
+            return 1000000000;
+        }
+        double wastedFuel = totalFuel - optimalFuel;
+        if(wastedFuel > maxFuelWasted) {
+            maxFuelWasted = wastedFuel;
         }
     }
 
-    return totalSum;
+    return maxFuelWasted;
 }
 
 void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
@@ -76,7 +79,7 @@ void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
     auto best = planesInRadar;
     double bestSolution = solutionValue(planesInRadar);
     double currentSolution;
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 50; i++) {
         int index = std::rand() % (planesInRadar.size() - 1);
         auto current = planesInRadar;
         std::swap(current[index], current[index + 1]);
@@ -96,7 +99,9 @@ void Airport::schedule()
     QVector<QPointer<Airplane>> incomingPlanesInRadar;
     std::copy_if(planes.begin(), planes.end(),
                  std::back_inserter(incomingPlanesInRadar),
-                 [this](const QPointer<Airplane>& p){return p->isIncoming() && p->getDistance() < radarRadius && p->getState() != State::MANUAL;});
+                 [this](const QPointer<Airplane>& p){
+        return p->isIncoming() && p->getDistance() < radarRadius
+                && p->getState() != State::MANUAL;});
 
 
     if(incomingPlanesInRadar.empty()) {
