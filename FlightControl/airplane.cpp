@@ -5,7 +5,7 @@
 #include <QRectF>
 
 const double Airplane::fuelUse = 1;
-const double Airplane::fuelCap = 1000;
+const double Airplane::fuelCap = 2000;
 const double Airplane::speed = 2.5;
 const double Airplane::maxAngle = 0.05;
 int Airplane::nOfPlanes = 0;
@@ -80,54 +80,36 @@ Airplane::~Airplane()
 QRectF Airplane::boundingRect() const
 {
     qreal adjust = -0.5;
-    return QRectF(-18 - adjust, -22 - adjust,
-                  36 + adjust, 60 + adjust);
+    return QRectF(-36 - adjust, -44 - adjust,
+                  72 + adjust, 120 + adjust);
 }
 
-// Funkcija koja vraca preciznije granice misa - radi detekcije kolizije
 QPainterPath Airplane::shape() const
 {
     QPainterPath path;
-    path.addRect(-10, -20, 20, 40);
+    qreal adjust = -0.5;
+    QRectF rect(-9 - adjust, -11 - adjust,
+                  18 + adjust, 30 + adjust);
+
+    path.addRect(rect);
     return path;
 }
 
-void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *)
+void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    // Crtamo telo
-    painter->setBrush(QColor());
-    painter->drawEllipse(-10, -20, 20, 40);
+    QPixmap img(":/images/01_airplane.png");
+    painter->drawPixmap(-20, -20, 40, 50, img);
 
+//    painter->drawRect(boundingRect());
 
-//    if (QStyleOptionGraphicsItem::
-//            levelOfDetailFromTransform(
-//                painter->worldTransform()
-//            ) >= .75) {
+//    painter->drawPolygon(QPolygonF(
+//    { QPointF(0, 0),
+//      QPointF(-60, 0),
+//      QPointF(-60, -100),
+//      QPointF(60, -100),
+//      QPointF(60, 0)}
+//));
 
-        // Crtamo oci
-        painter->setBrush(Qt::white);
-        painter->drawEllipse(-10, -17, 8, 8);
-        painter->drawEllipse(2, -17, 8, 8);
-
-        // Crtamo nos
-        painter->setBrush(Qt::black);
-        painter->drawEllipse(QRectF(-2, -22, 4, 4));
-
-
-        // Crtamo usi
-        painter->setBrush(scene()->collidingItems(this).isEmpty()
-                ? Qt::darkYellow : Qt::red);
-        painter->drawEllipse(-17, -12, 16, 16);
-        painter->drawEllipse(1, -12, 16, 16);
-
-        // Crtamo rep
-        QPainterPath path(QPointF(0, 20));
-        path.cubicTo(-5, 22, -5, 22, 0, 25);
-        path.cubicTo(5, 27, 5, 32, 0, 30);
-        path.cubicTo(-5, 32, -5, 42, 0, 35);
-        painter->setBrush(Qt::NoBrush);
-        painter->drawPath(path);
-//    }
 }
 
 State Airplane::getState()
@@ -200,16 +182,47 @@ void Airplane::move(){
 void Airplane::update()
 {
     if(state == State::CRASHED) {
-        qDebug() << "prvi kresd";
-        qDebug() << flightNo;
+//        qDebug() << "prvi kresd";
+//        qDebug() << flightNo;
 //        deleteLater();
 //        return;
     }
 
     // TODO: Steer if there are planes dangerously close
+    const auto dangerPlanes = scene()->items(
+                QPolygonF(
+                    { mapToScene(0, 0),
+                      mapToScene(-60, 0),
+                      mapToScene(-60, -100),
+                      mapToScene(60, -100),
+                      mapToScene(60, 0)}
+                ), Qt::IntersectsItemBoundingRect);
+    for (auto item: dangerPlanes) {
+        if(item == this) continue;
+        Airplane* plane = dynamic_cast<Airplane*>(item);
+        if(plane && plane->state != State::LANDING &&
+           plane->state != State::MANUAL && plane->state != State::REFUELING){
+
+            QLineF lineToPlane(QPointF(0, 0), mapFromItem(item, 0, 0));
+
+            qreal angleToPlane = acos(lineToPlane.dx() / lineToPlane.length());
+            if(lineToPlane.dy() < 0) angleToPlane = M_PI * 2 - angleToPlane;
+
+            angleToPlane = normalizeAngle((180 -  qRadiansToDegrees(angleToPlane)) + 180/2);
+
+            angleToPlane = qDegreesToRadians(angleToPlane);
+            if(angleToPlane >= 0 && angleToPlane < M_PI/2) {
+                // Rotate left
+               steer(angleToPlane > maxAngle ? maxAngle : angleToPlane);
+            } else if(angleToPlane <= 2 * M_PI && angleToPlane > (2 * M_PI - M_PI/2)) {
+                // Rotate right
+                steer(angleToPlane > maxAngle ? -maxAngle : -angleToPlane);
+            }
+        }
+    }
 
     // Check if the plane collided with other planes and if so, destroy all planes that collided
-    QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this);
+    QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this, Qt::IntersectsItemShape);
     foreach(QGraphicsItem* item, crashedPlanes){
         Airplane* plane = dynamic_cast<Airplane*>(item);
         if(plane && plane->state != State::CRASHED){

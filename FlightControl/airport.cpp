@@ -4,7 +4,7 @@ Airport::Airport()
 {
     setRect(0,0,20,20);
 
-    radarRadius = 200;
+    radarRadius = 400;
     occupied = false;
 
     // Call update() every 50 miliseconds
@@ -48,7 +48,7 @@ double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
         guess += p->getDistance() / Airplane::speed + 1 / 50;
         if(p->getFuel() - guess * Airplane::fuelUse < 0) return 100000000;
         // 100 - minimum...
-        double real = p->getFuel() - 100;
+        double real = p->getFuel() - 1000;
         if(guess > real) {
             totalSum += guess - real;
         }
@@ -75,16 +75,19 @@ void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
 
     auto best = planesInRadar;
     double bestSolution = solutionValue(planesInRadar);
+    double currentSolution;
     for(int i = 0; i < 100; i++) {
         int index = std::rand() % (planesInRadar.size() - 1);
         auto current = planesInRadar;
         std::swap(current[index], current[index + 1]);
-        double currentSolution = solutionValue(current);
+        currentSolution = solutionValue(current);
         if(currentSolution < bestSolution) {
             best = current;
+            bestSolution = currentSolution;
         }
     }
 
+//    qDebug() << bestSolution;
     planesInRadar = best;
 }
 
@@ -101,6 +104,7 @@ void Airport::schedule()
     }
 
     localSearch(incomingPlanesInRadar);
+
 
     // Sort the planes by the distance from the airport
 //    std::sort(incomingPlanesInRadar.begin(), incomingPlanesInRadar.end(),

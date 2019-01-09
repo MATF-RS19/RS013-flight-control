@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/01_airplane.png</file>
+        <file>airplane.cpp</file>
+        <file>airplane.h</file>
+        <file>airport.cpp</file>
+        <file>airport.h</file>
+        <file>controller.cpp</file>
+        <file>controller.h</file>
+        <file>main.cpp</file>
+    </qresource>
+</RCC>

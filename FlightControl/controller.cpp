@@ -40,7 +40,7 @@ void Controller::mousePressEvent(QMouseEvent *event)
     }else if(event->button() == Qt::LeftButton){
         foreach (Airplane* plane, airport->planes) {
             qDebug() << plane->boundingRect();
-            if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){  // Y U NO WORK ???
+            if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
                 focused_plane = plane;
                 focused_plane->setState(State::MANUAL);
                 qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;
@@ -81,7 +81,7 @@ void Controller::update()
     static std::mt19937 gen(rd());
     static std::uniform_real_distribution<double> random(0, 1);
 
-    static int max_planes = 10 ;
+    static int max_planes = 10;
 
     if(random(gen) > 0.95 && airport->planes.size() < max_planes){
 
@@ -91,11 +91,10 @@ void Controller::update()
         pos.setX(r * cos(a) + 300);
         pos.setY(r * sin(a) + 300);
 
-        double fuel = Airplane::calcFuel(pos, airport->pos());
-        fuel += (0.5 + random(gen)) * (Airplane::fuelCap - fuel);
+//        double fuel = Airplane::calcFuel(pos, airport->pos());
+//        fuel += (0.5 + random(gen)) * (Airplane::fuelCap - fuel);
 
-
-        Airplane* plane = new Airplane(pos, airport->pos(), fuel);
+        Airplane* plane = new Airplane(pos, airport->pos(), Airplane::fuelCap);
         airport->planes.push_back(plane);
         scene->addItem(plane);
     }

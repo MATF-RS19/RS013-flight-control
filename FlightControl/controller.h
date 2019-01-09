@@ -30,7 +30,7 @@ private:
     Airport* airport;
 //    std::vector<Airplane*> planes;
 
-    Airplane* focused_plane;
+    QPointer<Airplane> focused_plane;
 
     const static int width;
     const static int height;
