@@ -23,6 +23,20 @@ static double normalizeAngle(double angle)
     return angle;
 }
 
+double Airplane::calculateAngle()
+{
+    QLineF newDir(mapFromScene(direction), mapFromScene(0, 0));
+    double angle = std::acos(newDir.dx() / newDir.length());
+    if(newDir.dy() < 0)
+        angle = 2 * M_PI - angle;
+    angle = qRadiansToDegrees(angle);
+    angle += 90;
+    angle = normalizeAngle(angle);
+    if(angle > 180)
+        angle -= 360;
+    return angle;
+}
+
 Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
 {
     // First we draw the plane (a circle for now)
@@ -44,17 +58,8 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     double toTarget = qSqrt(direction.x() * direction.x() + direction.y() * direction.y());
     direction /= toTarget;
 
-    QLineF dir(pos, target);
-    currentAngle = std::acos(dir.dx() / dir.length());
-    if(dir.dy() < 0)
-        currentAngle = 2 * M_PI - currentAngle;
-    currentAngle = qRadiansToDegrees(currentAngle);
-    currentAngle += 90;
-    currentAngle = normalizeAngle(currentAngle);
-    if(currentAngle > 180)
-        currentAngle -= 360;
+    currentAngle = calculateAngle();
     setRotation(currentAngle);
-    //qDebug() << currentAngle;
 
     // Call update() every 50 miliseconds
     static QTimer timer;
@@ -163,7 +168,7 @@ void Airplane::move(){
 
     // Move the plane forward
     setPos(mapToParent(0, -speed));
-    setRotation(-currentAngle);
+    setRotation(rotation() + currentAngle);
     setScale(0.75);
 //    setPos(pos() - speed * direction);
     fuel -= fuelUse;
@@ -314,30 +319,8 @@ void Airplane::steer(double theta)
     direction.setX(x);
     direction.setY(y);
 
-    QLineF oldDir(mapToScene(0, -100), mapToScene(0, 0));
-    QLineF newDir(QPointF(0, 0), direction * 100);
-
     // Angle between previous and current direction vector
-    double angle = oldDir.angleTo(newDir);
-
-//    qDebug() << "prvi";
-//    qDebug() << angle;
-    angle = normalizeAngle(angle);
-//    if(angle > 180) {
-//        angle = angle - 360;
-//    }
-//    qDebug() << "drugi";
-//    qDebug() << angle;
-
-//    if(angle > 359.9 || angle < 0.1) {
-//        angle = 0;
-//    }
-    currentAngle += qSin(qDegreesToRadians(angle)) * 10;
-    currentAngle = normalizeAngle(currentAngle);
-    if(currentAngle > 180)
-        currentAngle -= 360;
-//    qDebug() << rotation();
-//    qDebug() << currentAngle;
+    currentAngle = calculateAngle();
 }
 
 void Airplane::setTarget(const QPointF target)

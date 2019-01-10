@@ -59,6 +59,7 @@ private:
     void holdingPattern();
     void landAndRefuel();
 
+    double calculateAngle();
 
     void setTarget(const QPointF target);
     void setOrigin(const QPointF origin);
