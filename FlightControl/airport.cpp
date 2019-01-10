@@ -105,8 +105,10 @@ void Airport::schedule()
     std::copy_if(planes.begin(), planes.end(),
                  std::back_inserter(incomingPlanesInRadar),
                  [this](const QPointer<Airplane>& p){
-                    return p->isIncoming() && p->getDistance() < radarRadius
-                    && p->getState() != State::MANUAL;});
+                    return p->isIncoming()
+                           && p->getDistance() < radarRadius
+                           && p->getState() != State::MANUAL
+                           && p->getState() != State::DANGER; });
 
 
     if(incomingPlanesInRadar.empty()) {
@@ -118,7 +120,8 @@ void Airport::schedule()
 
     for(const auto& p : incomingPlanesInRadar) {
         if(p == currentPlane) continue;
-        p->setState(State::HOLDING);
+        if(p->getState() != State::DANGER)
+            p->setState(State::HOLDING);
     }
     if(!currentPlane) {
         incomingPlanesInRadar[0]->setState(State::FLYING);

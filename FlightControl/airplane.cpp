@@ -107,6 +107,11 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     painter->drawPixmap(-20, -20, 40, 50, img);
 
     painter->drawRect(-15, 30, 30, 5);
+    if(state == State::DANGER) painter->setBrush(Qt::red);
+    else if (state == State::FLYING) painter->setBrush(Qt::green);
+    else if (state == State::HOLDING) painter->setBrush(Qt::yellow);
+    else painter->setBrush(Qt::blue);
+    painter->drawEllipse(20, 30, 10, 10);
 
     double fuelRatio = fuel / fuelCap;
     int r = 255 * (1 - fuelRatio);
@@ -114,6 +119,8 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     int b = 0;
     painter->setBrush(QColor(r, g, b));
     painter->drawRect(-15, 30, 30 * fuelRatio, 5);
+
+    painter->setRenderHint(QPainter::Antialiasing);
 
 //    painter->drawRect(boundingRect());
 
@@ -123,7 +130,7 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
 //      QPointF(-60, -100),
 //      QPointF(60, -100),
 //      QPointF(60, 0)}
-//));
+//    ));
 
 }
 
@@ -179,7 +186,7 @@ void Airplane::move(){
 //    setPos(pos() - speed * direction);
     fuel -= fuelUse;
 
-    if(state == State::MANUAL){
+    if(state == State::MANUAL || state == State::DANGER){
         return;
     }else if(state == State::FLYING){
         moveToTarget();
@@ -208,7 +215,9 @@ void Airplane::update()
 //        return;
     }
 
-    // TODO: Steer if there are planes dangerously close
+    // Steer if there are planes dangerously close
+    bool inDanger = false;
+
     const auto dangerPlanes = scene()->items(
                 QPolygonF(
                     { mapToScene(0, 0),
@@ -217,28 +226,42 @@ void Airplane::update()
                       mapToScene(60, -100),
                       mapToScene(60, 0)}
                 ), Qt::IntersectsItemBoundingRect);
+
     for (auto item: dangerPlanes) {
         if(item == this) continue;
         Airplane* plane = dynamic_cast<Airplane*>(item);
         if(plane && plane->state != State::LANDING &&
            plane->state != State::MANUAL && plane->state != State::REFUELING){
+            inDanger = true;
+//            qDebug() << "in danger =" << inDanger;
 
             QLineF lineToPlane(QPointF(0, 0), mapFromItem(item, 0, 0));
 
             qreal angleToPlane = acos(lineToPlane.dx() / lineToPlane.length());
             if(lineToPlane.dy() < 0) angleToPlane = M_PI * 2 - angleToPlane;
 
-            angleToPlane = normalizeAngle((180 -  qRadiansToDegrees(angleToPlane)) + 180/2);
+            angleToPlane = normalizeAngle((/*180 -  */qRadiansToDegrees(angleToPlane)) + 180/2);
 
             angleToPlane = qDegreesToRadians(angleToPlane);
-            if(angleToPlane >= 0 && angleToPlane < M_PI/2) {
+//            qDebug() << "angle to plane =" << angleToPlane;
+            if(angleToPlane >= 3 * M_PI/2 && angleToPlane < M_PI/2) {
                 // Rotate left
                steer(angleToPlane > maxAngle ? maxAngle : angleToPlane);
-            } else if(angleToPlane <= 2 * M_PI && angleToPlane > (2 * M_PI - M_PI/2)) {
+//               plane->steer(angleToPlane > maxAngle ? -maxAngle : -angleToPlane);
+//                qDebug() << "current angle =" << currentAngle;
+            } else if(angleToPlane < 3 * M_PI/2 && angleToPlane >= M_PI/2) {
                 // Rotate right
                 steer(angleToPlane > maxAngle ? -maxAngle : -angleToPlane);
+//                plane->steer(angleToPlane > maxAngle ? maxAngle : angleToPlane);
+//                qDebug() << "current angle =" << currentAngle;
             }
         }
+    }
+    if(inDanger) {
+//        qDebug() << "DANGER" << this->flightNo;
+        state = State::DANGER;
+    } else {
+        if(state == State::DANGER) state = State::FLYING;
     }
 
     // Check if the plane collided with other planes and if so, destroy all planes that collided
@@ -303,7 +326,8 @@ void Airplane::moveToTarget(){
 
 void Airplane::holdingPattern(){
     wastedFuel += fuelUse;
-    steer(0.025);
+    steer(-0.0125);
+//    steer(0.025);
 }
 
 void Airplane::landAndRefuel(){

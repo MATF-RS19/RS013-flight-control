@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <QGraphicsScene>
 
-enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED, MANUAL};
+enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED, MANUAL, DANGER};
 
 class Airplane: public QObject, public QGraphicsItem{
     Q_OBJECT
