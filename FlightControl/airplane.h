@@ -32,6 +32,8 @@ public:
 
     double getFuel();
 
+    double getWastedFuel();
+
     bool isIncoming();
 
     static double calcFuel(QPointF origin, QPointF target);
@@ -65,6 +67,8 @@ private:
     void setOrigin(const QPointF origin);
 
     double fuel;
+
+    double wastedFuel;
 
     State state;
 

@@ -43,6 +43,7 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
 
     setPos(pos);
 
+    wastedFuel = 0;
 
     // Plane is flying from pos to target, and spawns with some fuel
     setOrigin(pos);
@@ -149,6 +150,11 @@ double Airplane::getDistance()
 double Airplane::getFuel()
 {
     return fuel;
+}
+
+double Airplane::getWastedFuel()
+{
+    return wastedFuel;
 }
 
 bool Airplane::isIncoming()
@@ -296,7 +302,7 @@ void Airplane::moveToTarget(){
 
 
 void Airplane::holdingPattern(){
-
+    wastedFuel += fuelUse;
     steer(0.025);
 }
 
