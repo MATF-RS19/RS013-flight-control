@@ -19,7 +19,7 @@ Airport::~Airport()
     delete timer;
 }
 
-void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     QPixmap img(":/images/02_airport.png");
     painter->drawPixmap(-15, -15, 30, 30, img);
@@ -28,15 +28,10 @@ void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 void Airport::update()
 {
-//    qDebug() << "pre";
-//    qDebug() << planes.length();
-
     planes.erase(std::remove_if(planes.begin(), planes.end(),
                                 [](const QPointer<Airplane>& p){return p.isNull();}),
                 planes.end());
 
-//    qDebug() << "posle";
-//    qDebug() << planes.length();
     if(currentPlane && !currentPlane->isIncoming()) {
         currentPlane = nullptr;
     }
@@ -115,7 +110,8 @@ void Airport::schedule()
                     return p->isIncoming()
                            && p->getDistance() < radarRadius
                            && p->getState() != State::MANUAL
-                           && p->getState() != State::DANGER; });
+                           && p->getState() != State::DANGER
+                           && p->getState() != State::REFUELING; });
 
 
     if(incomingPlanesInRadar.empty()) {
@@ -130,7 +126,7 @@ void Airport::schedule()
         p->setState(State::HOLDING);
     }
 
-    if(!currentPlane || (currentPlane->getDistance() > 100)) {
+    if(!currentPlane || (currentPlane->getDistance() > 200)) {
         incomingPlanesInRadar[0]->setState(State::FLYING);
         currentPlane = incomingPlanesInRadar[0];
     }

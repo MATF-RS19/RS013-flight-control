@@ -39,11 +39,11 @@ double Airplane::calculateAngle()
 
 Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
 {
-    // First we draw the plane (a circle for now)
-
     setPos(pos);
 
     wastedFuel = 0;
+    steerLeft = true;
+    stillDangerous = false;
 
     // Plane is flying from pos to target, and spawns with some fuel
     setOrigin(pos);
@@ -104,6 +104,8 @@ QPainterPath Airplane::shape() const
 void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     QPixmap img(":/images/01_airplane.png");
+//    painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
+//    painter->fillRect(img.rect(), Qt::red);
     painter->drawPixmap(-20, -20, 40, 50, img);
 
     painter->drawRect(-15, 30, 30, 5);
@@ -115,24 +117,13 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     painter->drawEllipse(20, 30, 10, 10);
 
     double fuelRatio = fuel / fuelCap;
-    int r = 255 * (1 - fuelRatio);
-    int g = 255 * fuelRatio;
+    int r = static_cast<int>(255.0 * (1 - fuelRatio));
+    int g = static_cast<int>(255.0 * fuelRatio);
     int b = 0;
     painter->setBrush(QColor(r, g, b));
-    painter->drawRect(-15, 30, 30 * fuelRatio, 5);
+    painter->drawRect(-15, 30, static_cast<int>(30 * fuelRatio), 5);
 
     painter->setRenderHint(QPainter::Antialiasing);
-
-//    painter->drawRect(boundingRect());
-
-//    painter->drawPolygon(QPolygonF(
-//    { QPointF(0, 0),
-//      QPointF(-60, 0),
-//      QPointF(-60, -100),
-//      QPointF(60, -100),
-//      QPointF(60, 0)}
-//    ));
-
 }
 
 State Airplane::getState()
@@ -142,11 +133,8 @@ State Airplane::getState()
 
 void Airplane::setState(State state)
 {
-
     if(this->state != State::CRASHED){
-
         this->state = state;
-
     }
 }
 
@@ -229,46 +217,46 @@ void Airplane::update()
 
     for (auto item: dangerPlanes) {
 
-        if(state == State::LANDING || state == State::MANUAL || state == State::REFUELING) break;
+        if(state == State::LANDING || state == State::MANUAL || state == State::REFUELING) {
+            inDanger = false;
+            break;
+        }
 
         if(item == this) continue;
         Airplane* plane = dynamic_cast<Airplane*>(item);
 
         if(plane){
             inDanger = true;
-//            qDebug() << "in danger =" << inDanger;
 
             QLineF lineToPlane(QPointF(0, 0), mapFromItem(item, 0, 0));
 
             qreal angleToPlane = acos(lineToPlane.dx() / lineToPlane.length());
             if(lineToPlane.dy() < 0) angleToPlane = M_PI * 2 - angleToPlane;
 
-            angleToPlane = normalizeAngle((/*180 -  */qRadiansToDegrees(angleToPlane)) + 180/2);
-
-//            qDebug() << angleToPlane;
+            angleToPlane = normalizeAngle((/*180 -  */qRadiansToDegrees(angleToPlane)) + 90);
 
             angleToPlane = qDegreesToRadians(angleToPlane);
-//            qDebug() << "angle to plane =" << angleToPlane;
-
 
             if(angleToPlane >= M_PI) {
                 // Rotate left
                steer(angleToPlane > maxAngle ? maxAngle : angleToPlane);
-//               plane->steer(angleToPlane > maxAngle ? -maxAngle : -angleToPlane);
-//                qDebug() << "current angle =" << currentAngle;
+                steerLeft = false;
             } else if(angleToPlane <= M_PI) {
                 // Rotate right
                 steer(angleToPlane > maxAngle ? -maxAngle : -angleToPlane);
-//                plane->steer(angleToPlane > maxAngle ? maxAngle : angleToPlane);
-//                qDebug() << "current angle =" << currentAngle;
+                steerLeft = true;
             }
         }
     }
     if(inDanger) {
-//        qDebug() << "DANGER" << this->flightNo;
+//        qDebug() << "in danger" << this->flightNo;
         state = State::DANGER;
     } else {
-        if(state == State::DANGER) state = State::FLYING;
+        if(state == State::DANGER) {
+//            qDebug() << "not in danger any more";
+            state = State::FLYING;
+            stillDangerous = true;
+        }
     }
 
     // Check if the plane collided with other planes and if so, destroy all planes that collided
@@ -302,6 +290,11 @@ void Airplane::update()
 
 void Airplane::moveToTarget(){
 
+    if(stillDangerous) {
+        holdingPattern();
+        stillDangerous = false;
+        return;
+    }
     // If plane arrived at target, land and refuel
     QPointF d = pos() - target;
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
@@ -337,7 +330,11 @@ void Airplane::moveToTarget(){
 
 void Airplane::holdingPattern(){
     wastedFuel += fuelUse;
-    steer(-0.0125);
+    if(steerLeft) {
+        steer(-0.025);
+    } else {
+        steer(0.025);
+    }
 //    steer(0.025);
 }
 

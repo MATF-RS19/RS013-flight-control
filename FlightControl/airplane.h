@@ -74,6 +74,9 @@ private:
 
     bool incoming;
 
+    bool steerLeft;
+    bool stillDangerous;
+
     // Plane is flying from origin to target
     QPointF origin;
     QPointF target;
