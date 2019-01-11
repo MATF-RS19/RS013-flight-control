@@ -56,19 +56,45 @@ void Controller::mousePressEvent(QMouseEvent *event)
 void Controller::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Left){
-        if(focused_plane)
-            focused_plane->steer(-0.025);
-    }else if(event->key() == Qt::Key_Right){
-        if(focused_plane)
-            focused_plane->steer(0.025);
-    }else if(event->key() == Qt::Key_Up){
-        if(focused_plane)
-            if(focused_plane->getState() != State::CRASHED)
-                focused_plane->setState(State::FLYING);
-        focused_plane = nullptr;
-    }else if(event->key() == Qt::Key_Down){
-        // TODO Force selected plane to land
 
+        if(!focused_plane){
+            qDebug() << "No plane is focused";
+            return;
+        }
+        focused_plane->steer(-0.025);
+
+    }else if(event->key() == Qt::Key_Right){
+
+        if(!focused_plane){
+            qDebug() << "No plane is focused";
+            return;
+        }
+        focused_plane->steer(0.025);
+
+    }else if(event->key() == Qt::Key_Up){
+
+        if(!focused_plane){
+            qDebug() << "No plane is focused";
+            return;
+        }
+        if(focused_plane->getState() != State::CRASHED)
+            focused_plane->setState(State::FLYING);
+
+        focused_plane = nullptr;
+
+    }else if(event->key() == Qt::Key_Down){
+
+        if(!focused_plane){
+            qDebug() << "No plane is focused";
+            return;
+        }
+        if(airport->currentPlane && (airport->currentPlane->getState() == State::LANDING || airport->currentPlane->getState() == State::REFUELING)){
+            qDebug() << "Another plane currently landing";
+            return;
+        }
+        airport->currentPlane = focused_plane;
+        focused_plane->setState(State::FLYING);
+        focused_plane = nullptr;
     }
 }
 
@@ -87,15 +113,11 @@ void Controller::update()
     static int max_planes = 10;
 
     if(random(gen) > 0.95 && airport->planes.size() < max_planes){
-
         double a = random(gen) * 2 * M_PI;
         double r = 500 + random(gen) * 200;
         QPoint pos;
         pos.setX(r * cos(a) + 300);
         pos.setY(r * sin(a) + 300);
-
-//        double fuel = Airplane::calcFuel(pos, airport->pos());
-//        fuel += (0.5 + random(gen)) * (Airplane::fuelCap - fuel);
 
         Airplane* plane = new Airplane(pos, airport->pos(), Airplane::fuelCap);
         airport->planes.push_back(plane);
@@ -103,22 +125,18 @@ void Controller::update()
     }
 
 
-//    if(random(gen) > 0.99){
+    if(random(gen) > 0.998){
+        double a = random(gen) * 2 * M_PI;
+        double r = 600;
+        QPoint pos, tar;
+        pos.setX(r * cos(a) + 300);
+        pos.setY(r * sin(a) + 300);
 
-//        double a = random(gen) * 2 * M_PI;
-//        double r = 600;
-//        QPoint pos, tar;
-//        pos.setX(r * cos(a) + 300);
-//        pos.setY(r * sin(a) + 300);
+        a = random(gen) * 2 * M_PI;
+        tar.setX(r * cos(a) + 300);
+        tar.setY(r * sin(a) + 300);
 
-//        a = random(gen) * 2 * M_PI;
-//        tar.setX(r * cos(a) + 300);
-//        tar.setY(r * sin(a) + 300);
-
-//        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
-//        scene->addItem(plane);
-
-//    }
-
+        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
+        scene->addItem(plane);
+    }
 }
-
