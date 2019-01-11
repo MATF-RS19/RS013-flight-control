@@ -191,8 +191,6 @@ void Airplane::move(){
     if(state == State::MANUAL || state == State::DANGER){
         currentAngle = 0;
         return;
-//    }else if(state == State::DANGER){
-//        return;
     }else if(state == State::FLYING){
         moveToTarget();
     }else if(state == State::HOLDING){
