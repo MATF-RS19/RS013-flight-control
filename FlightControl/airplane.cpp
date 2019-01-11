@@ -134,6 +134,7 @@ State Airplane::getState()
 
 void Airplane::setState(State state)
 {
+
     if(this->state != State::CRASHED){
 
         this->state = state;
@@ -180,6 +181,7 @@ void Airplane::move(){
     fuel -= fuelUse;
 
     if(state == State::MANUAL){
+        currentAngle = 0;
         return;
     }else if(state == State::FLYING){
         moveToTarget();
@@ -202,10 +204,7 @@ void Airplane::move(){
 void Airplane::update()
 {
     if(state == State::CRASHED) {
-//        qDebug() << "prvi kresd";
-//        qDebug() << flightNo;
-//        deleteLater();
-//        return;
+        return;
     }
 
     // TODO: Steer if there are planes dangerously close
@@ -218,10 +217,12 @@ void Airplane::update()
                       mapToScene(60, 0)}
                 ), Qt::IntersectsItemBoundingRect);
     for (auto item: dangerPlanes) {
+
+        if(state == State::LANDING || state == State::MANUAL || state == State::REFUELING) break;
+
         if(item == this) continue;
         Airplane* plane = dynamic_cast<Airplane*>(item);
-        if(plane && plane->state != State::LANDING &&
-           plane->state != State::MANUAL && plane->state != State::REFUELING){
+        if(plane){
 
             QLineF lineToPlane(QPointF(0, 0), mapFromItem(item, 0, 0));
 
@@ -244,8 +245,12 @@ void Airplane::update()
     // Check if the plane collided with other planes and if so, destroy all planes that collided
     QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this, Qt::IntersectsItemShape);
     foreach(QGraphicsItem* item, crashedPlanes){
+
+        if(state == State::REFUELING) break;
+
         Airplane* plane = dynamic_cast<Airplane*>(item);
-        if(plane && plane->state != State::CRASHED){
+
+        if(plane && plane->state != State::CRASHED && plane->state != State::REFUELING){
             plane->setState(State::CRASHED);
             state = State::CRASHED;
             plane->deleteLater();

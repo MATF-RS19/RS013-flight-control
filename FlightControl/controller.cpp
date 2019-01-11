@@ -41,6 +41,9 @@ void Controller::mousePressEvent(QMouseEvent *event)
         foreach (Airplane* plane, airport->planes) {
             qDebug() << plane->boundingRect();
             if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
+
+                if(focused_plane) focused_plane->setState(State::FLYING);
+
                 focused_plane = plane;
                 focused_plane->setState(State::MANUAL);
                 qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;

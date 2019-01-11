@@ -117,7 +117,7 @@ void Airport::schedule()
 
 
     for(const auto& p : incomingPlanesInRadar) {
-        if(p == currentPlane) continue;
+        if(p == currentPlane || p->getState() == State::MANUAL) continue;
         p->setState(State::HOLDING);
     }
     if(!currentPlane) {
