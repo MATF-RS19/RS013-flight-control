@@ -10,6 +10,7 @@ Controller::Controller(int width, int height)
     setScene(scene);
     fitInView(0,0, width, height, Qt::KeepAspectRatio);
     setFixedSize(width, height);
+    setBackgroundBrush(QColor(20, 20, 25));
 
     focused_plane = nullptr;
 
@@ -39,7 +40,7 @@ void Controller::mousePressEvent(QMouseEvent *event)
         scene->addItem(plane);
     }else if(event->button() == Qt::LeftButton){
         foreach (Airplane* plane, airport->planes) {
-            qDebug() << plane->boundingRect();
+//            qDebug() << plane->boundingRect();
             if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
 
                 if(focused_plane) focused_plane->setState(State::FLYING);

@@ -8,5 +8,6 @@
         <file>controller.cpp</file>
         <file>controller.h</file>
         <file>main.cpp</file>
+        <file>images/02_airport.png</file>
     </qresource>
 </RCC>

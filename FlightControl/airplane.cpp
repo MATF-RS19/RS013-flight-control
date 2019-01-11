@@ -202,8 +202,8 @@ void Airplane::move(){
             deleteLater();
         }
         incoming = !incoming;
-        state = State::FLYING;
         timer->start(50);
+        state = State::FLYING;
     }
 
 
@@ -225,7 +225,7 @@ void Airplane::update()
                       mapToScene(-50, -80),
                       mapToScene(50, -80),
                       mapToScene(50, 0)}
-                ), Qt::IntersectsItemBoundingRect);
+                ), Qt::IntersectsItemShape);
 
     for (auto item: dangerPlanes) {
 

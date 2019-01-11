@@ -4,6 +4,7 @@
 #include "airplane.h"
 #include <algorithm>
 #include <QPointer>
+#include <QPainter>
 
 class Airport : public QObject, public QGraphicsEllipseItem{
 
@@ -12,6 +13,10 @@ Q_OBJECT
 public:
     Airport();
     ~Airport();
+
+    void paint(QPainter *painter,
+               const QStyleOptionGraphicsItem *option,
+               QWidget *widget) override;
 
     QVector<QPointer<Airplane>> planes;
     QPointer<Airplane> currentPlane;

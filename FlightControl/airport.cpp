@@ -19,6 +19,13 @@ Airport::~Airport()
     delete timer;
 }
 
+void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    QPixmap img(":/images/02_airport.png");
+    painter->drawPixmap(-15, -15, 30, 30, img);
+    painter->setRenderHint(QPainter::Antialiasing);
+}
+
 void Airport::update()
 {
 //    qDebug() << "pre";
