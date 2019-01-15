@@ -27,9 +27,9 @@ public slots:
     void update();
 
 private:
-    QString name;
 
     double radarRadius;
+    QString name;
 
     void schedule();
 

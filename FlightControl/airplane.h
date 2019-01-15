@@ -9,7 +9,7 @@
 #include <QTimer>
 #include <QGraphicsScene>
 
-enum class State {FLYING, HOLDING, LANDING, REFUELING, CRASHED, MANUAL, DANGER};
+enum class State {FLYING, HOLDING, LANDING, CRASHED, MANUAL, DANGER};
 
 class Airplane: public QObject, public QGraphicsItem{
     Q_OBJECT
@@ -34,7 +34,8 @@ public:
 
     double getWastedFuel();
 
-    bool isIncoming();
+    QPointF getTarget();
+    void setTarget(const QPointF target);
 
     static double calcFuel(QPointF origin, QPointF target);
 
@@ -63,7 +64,7 @@ private:
 
     double calculateAngle();
 
-    void setTarget(const QPointF target);
+
     void setOrigin(const QPointF origin);
 
     double fuel;
@@ -71,8 +72,6 @@ private:
     double wastedFuel;
 
     State state;
-
-    bool incoming;
 
     bool steerLeft;
     bool stillDangerous;

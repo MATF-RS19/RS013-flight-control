@@ -50,13 +50,13 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     setTarget(target);
     this->fuel = fuel;
     state = State::FLYING;
-    incoming = true;
 
     flightNo = nOfPlanes++;
 
     // Calculate direction vector of the plane
     direction = pos - target;
     double toTarget = qSqrt(direction.x() * direction.x() + direction.y() * direction.y());
+//    qDebug() << toTarget;
     direction /= toTarget;
 
     currentAngle = calculateAngle();
@@ -68,6 +68,7 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     timer.start(50);
 
     // Move the plane ever 50 miliseconds
+    //TODO static timer instead of member
     this->timer = new QTimer();
     connect(this->timer, SIGNAL(timeout()), this, SLOT(move()));
     this->timer->start(50);
@@ -154,11 +155,6 @@ double Airplane::getWastedFuel()
     return wastedFuel;
 }
 
-bool Airplane::isIncoming()
-{
-    return incoming;
-}
-
 double Airplane::calcFuel(QPointF o, QPointF t)
 {
     QPointF d = o - t;
@@ -172,7 +168,7 @@ void Airplane::move(){
     // Move the plane forward
     setPos(mapToParent(0, -speed));
     setRotation(rotation() + currentAngle);
-    setScale(0.75);
+    setScale(0.5);
 //    setPos(pos() - speed * direction);
     fuel -= fuelUse;
 
@@ -185,14 +181,14 @@ void Airplane::move(){
         holdingPattern();
     }else if(state == State::LANDING){
         landAndRefuel();
-    }else if(state == State::REFUELING){
+    }/*else if(state == State::REFUELING){
         if(!incoming){
             deleteLater();
         }
         incoming = !incoming;
         timer->start(50);
         state = State::FLYING;
-    }
+    }*/
 
 
 }
@@ -217,7 +213,7 @@ void Airplane::update()
 
     for (auto item: dangerPlanes) {
 
-        if(state == State::LANDING || state == State::MANUAL || state == State::REFUELING) {
+        if(state == State::LANDING || state == State::MANUAL) {
             inDanger = false;
             break;
         }
@@ -260,17 +256,17 @@ void Airplane::update()
     }
 
     // Check if the plane collided with other planes and if so, destroy all planes that collided
-    QList<QGraphicsItem*> crashedPlanes = scene()->collidingItems(this, Qt::IntersectsItemShape);
+    QList<QGraphicsItem*> crashedPlanes = collidingItems(Qt::IntersectsItemShape);
     foreach(QGraphicsItem* item, crashedPlanes){
-
-        if(state == State::REFUELING) break;
 
         Airplane* plane = dynamic_cast<Airplane*>(item);
 
-        if(plane && plane->state != State::CRASHED && plane->state != State::REFUELING){
+        if(plane && plane->state != State::CRASHED){
             plane->setState(State::CRASHED);
             state = State::CRASHED;
             plane->deleteLater();
+
+            qDebug() << flightNo << " crashed with " << plane->flightNo;
         }
     }
 
@@ -283,7 +279,6 @@ void Airplane::update()
     }
 
     if(state == State::CRASHED) {
-        qDebug() << flightNo << "crashed";
         deleteLater();
     }
 }
@@ -340,13 +335,14 @@ void Airplane::holdingPattern(){
 
 void Airplane::landAndRefuel(){
 
-    timer->start(1000);
+//    timer->start(1000);
     qDebug() << "Flight-" + QString::number(flightNo) + " arrived to target";
-    QPointF t = target;
-    setTarget(origin);
-    setOrigin(t);
-    state = State::REFUELING;
-    this->fuel = fuelCap;
+//    QPointF t = target;
+//    setTarget(origin);
+//    setOrigin(t);
+//    state = State::REFUELING;
+//    this->fuel = fuelCap;
+    deleteLater();
 }
 
 void Airplane::steer(double theta)
@@ -364,6 +360,11 @@ void Airplane::steer(double theta)
 void Airplane::setTarget(const QPointF target)
 {
     this->target = target;
+}
+
+QPointF Airplane::getTarget()
+{
+    return target;
 }
 
 void Airplane::setOrigin(const QPointF origin)

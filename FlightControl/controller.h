@@ -44,6 +44,7 @@ private:
     double originX;
     double originY;
 
+    Airport *findClosestAirport(const QPointF &airplanePos);
 };
 
 #endif // CONTROLLER_H

@@ -5,7 +5,7 @@ Airport::Airport(QString name)
 {
     setRect(0,0,20,20);
 
-    radarRadius = 400;
+    radarRadius = 200;
     occupied = false;
 
     // Call update() every 50 miliseconds
@@ -44,9 +44,9 @@ void Airport::update()
                                 [](const QPointer<Airplane>& p){return p.isNull();}),
                 planes.end());
 
-    if(currentPlane && !currentPlane->isIncoming()) {
-        currentPlane = nullptr;
-    }
+//    if(currentPlane && !currentPlane->isIncoming()) {
+//        currentPlane = nullptr;
+//    }
     if(!planes.empty()){
         schedule();
     }
@@ -115,32 +115,30 @@ void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
 
 void Airport::schedule()
 {
-    QVector<QPointer<Airplane>> incomingPlanesInRadar;
+    QVector<QPointer<Airplane>> planesInRadar;
     std::copy_if(planes.begin(), planes.end(),
-                 std::back_inserter(incomingPlanesInRadar),
+                 std::back_inserter(planesInRadar),
                  [this](const QPointer<Airplane>& p){
-                    return p->isIncoming()
-                           && p->getDistance() < radarRadius
+                    return p->getDistance() < radarRadius
                            && p->getState() != State::MANUAL
-                           && p->getState() != State::DANGER
-                           && p->getState() != State::REFUELING; });
+                           && p->getState() != State::DANGER; });
 
 
-    if(incomingPlanesInRadar.empty()) {
+    if(planesInRadar.empty()) {
         return;
     }
 
-    localSearch(incomingPlanesInRadar);
+    localSearch(planesInRadar);
 
 
-    for(const auto& p : incomingPlanesInRadar) {
+    for(const auto& p : planesInRadar) {
         if(p == currentPlane || p->getState() == State::MANUAL || p->getState() == State::DANGER) continue;
         p->setState(State::HOLDING);
     }
 
-    if(!currentPlane || (currentPlane->getDistance() > 200)) {
-        incomingPlanesInRadar[0]->setState(State::FLYING);
-        currentPlane = incomingPlanesInRadar[0];
+    if(!currentPlane || (currentPlane->getDistance() > radarRadius/2)) {
+        planesInRadar[0]->setState(State::FLYING);
+        currentPlane = planesInRadar[0];
     }
 }
 

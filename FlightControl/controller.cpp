@@ -25,7 +25,7 @@ Controller::Controller(int width, int height)
     // Call update() every 50 miliseconds
     static QTimer t;
     connect(&t, SIGNAL(timeout()), this, SLOT(update()));
-    t.start(50);
+    t.start(15000);
 
     scaleCounter = 0;
 
@@ -66,7 +66,10 @@ void Controller::run(int width, int height)
         QPoint pos(position[0].toInt(), position[1].toInt());
         airports[i]->setPos(mapToScene(pos));
 
+        QPointF tmp = mapToScene(pos);
+
         scene->addItem(airports[i]);
+//        scene->addEllipse(tmp.x()-airports[i]->radarRadius/2, tmp.y()-airports[i]->radarRadius/2, airports[i]->radarRadius,airports[i]->radarRadius);
     }
     show();
 }
@@ -76,19 +79,27 @@ static double distanceSquared(QPointF p, QPointF q)
     return (p.x() - q.x()) * (p.x() - q.x()) + (p.y() - q.y()) * (p.y() - q.y());
 }
 
+Airport* Controller::findClosestAirport(const QPointF& airplanePos)
+{
+    // This airplane's target is the closest airport
+    auto closest = std::min_element(airports.cbegin(), airports.cend(),
+                                    [airplanePos](Airport* a1, Airport* a2)
+                                    {return distanceSquared(a1->pos(), airplanePos) <
+                                            distanceSquared(a2->pos(), airplanePos);});
+
+//    qDebug() << (*closest)->name;
+    return *closest;
+}
+
 void Controller::mousePressEvent(QMouseEvent *event)
 {
     // Spawn a new airplane on the clicked location (this is for testing purposes)
     if(event->button() == Qt::RightButton) {
-        // This airplane's target is the closest airport
-        auto closest = std::min_element(airports.cbegin(), airports.cend(),
-                                        [event](Airport* a1, Airport* a2)
-                                        {return distanceSquared(a1->pos(), event->pos()) <
-                                                distanceSquared(a2->pos(), event->pos());});
-        Airplane* plane = new Airplane(mapToScene(event->pos()), (*closest)->pos(), Airplane::fuelCap);
-        (*closest)->planes.push_back(plane);
+        auto closest = findClosestAirport(mapToScene(event->pos()));
+        Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos(), Airplane::fuelCap);
+        closest->planes.push_back(plane);
         scene->addItem(plane);
-        qDebug() << event->pos();
+//        qDebug() <<mapToScene(event->pos());
     } else if(event->button() == Qt::LeftButton) {
         for(Airport* airport : airports) {
             foreach (Airplane* plane, airport->planes) {
@@ -160,12 +171,29 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        if(airports[0]->currentPlane && (airports[0]->currentPlane->getState() == State::LANDING
-                                         || airports[0]->currentPlane->getState() == State::REFUELING)){
+
+
+        // Manual control is intended for dangerous situations
+        // If a plane is running low on fuel even though its target is too far it should find nearest airport to land
+
+        auto closest = findClosestAirport(focused_plane->pos());
+
+        // Move this plane from previous target airport to closest airport
+        auto targetPos = focused_plane->getTarget();
+        auto currentTargetIt = std::find_if(airports.begin(), airports.end(),
+                                              [targetPos](Airport* a){return a->pos() == targetPos;});
+        Airport* currentTarget = *currentTargetIt;
+        currentTarget->planes.erase(std::remove(currentTarget->planes.begin(), currentTarget->planes.end(), focused_plane));
+
+        closest->planes.push_back(focused_plane);
+
+        focused_plane->setTarget(closest->pos());
+
+        if(closest->currentPlane && (closest->currentPlane->getState() == State::LANDING)){
             qDebug() << "Another plane currently landing";
             return;
         }
-        airports[0]->currentPlane = focused_plane;
+        closest->currentPlane = focused_plane;
         focused_plane->setState(State::FLYING);
         focused_plane = nullptr;
     }
@@ -186,50 +214,20 @@ void Controller::wheelEvent(QWheelEvent *event)
 
 void Controller::update()
 {
-    // trebalo bi da je nepotrebno jer je QPointer
-    if(focused_plane){
-        if(focused_plane->getState() == State::CRASHED){
-            focused_plane = nullptr;
-        }
-    }
-
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    static std::uniform_real_distribution<double> random(0, 1);
 
-    std::uniform_int_distribution<int> randomDiscrete(0, airports.size());
-
-    static int max_planes = 1;
+    std::uniform_int_distribution<int> randomDiscrete(1, airports.size()-1);
 
     for(int i = 0; i < airports.size(); i++) {
-        if(random(gen) > 0.95 && airports[i]->planes.size() < max_planes){
-            double a = random(gen) * 2 * M_PI;
-            double r = 500 + random(gen) * 200;
-            QPointF pos;
-            pos.setX(r * cos(a) + 300);
-            pos.setY(r * sin(a) + 300);
 
-
-
-            Airplane* plane = new Airplane(pos, airports[i]->pos(), Airplane::fuelCap);
-            airports[i]->planes.push_back(plane);
+            int randomIdx = randomDiscrete(gen);
+//            qDebug() << randomIdx;
+            int targetIdx = (i + randomIdx) % airports.size();
+//            qDebug() << targetIdx;
+            Airplane* plane = new Airplane(airports[i]->pos(), airports[targetIdx]->pos(), Airplane::fuelCap);
+            airports[targetIdx]->planes.push_back(plane);
             scene->addItem(plane);
-        }
     }
 
-//    samo prolazi...
-//    if(random(gen) > 0.998){
-//        double a = random(gen) * 2 * M_PI;
-//        double r = 600;
-//        QPoint pos, tar;
-//        pos.setX(r * cos(a) + 300);
-//        pos.setY(r * sin(a) + 300);
-
-//        a = random(gen) * 2 * M_PI;
-//        tar.setX(r * cos(a) + 300);
-//        tar.setY(r * sin(a) + 300);
-
-//        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
-//        scene->addItem(plane);
-//    }
 }
