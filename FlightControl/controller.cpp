@@ -1,16 +1,23 @@
 #include "controller.h"
 
 #include <random>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 Controller::Controller(int width, int height)
 {
     // Create the scene
     scene = new QGraphicsScene(this);
-    scene->setSceneRect(0,0,width, height);
-    setScene(scene);
-    fitInView(0,0, width, height, Qt::KeepAspectRatio);
+    setSceneRect(0, 0, width, height);
+    setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
+
     setFixedSize(width, height);
-    setBackgroundBrush(QColor(20, 20, 25));
+//    fitInView(sceneRect(), Qt::KeepAspectRatio);
+    setScene(scene);
+
+
 
     focused_plane = nullptr;
 
@@ -18,37 +25,78 @@ Controller::Controller(int width, int height)
     static QTimer t;
     connect(&t, SIGNAL(timeout()), this, SLOT(update()));
     t.start(50);
+
+
+    run(width, height);
 }
 
-void Controller::run()
+void Controller::run(int width, int height)
 {
-    // Create an airport and add it to scene
-    airport = new Airport();
-    airport->setPos(300,300);
+    QFile file(":/data/airports.json");
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString val = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+//    qDebug() << doc;
+    QJsonObject jsonObj = doc.object();
 
-    scene->addItem(airport);
+    QJsonValue map = jsonObj.value("map");
+    QPixmap background(map.toString());
+//    background = background.scaled(width, height, Qt::IgnoreAspectRatio);
+    setCacheMode(QGraphicsView::CacheBackground);
+    setBackgroundBrush(background);
+    setTransformationAnchor(QGraphicsView::NoAnchor);
+    scale(static_cast<double>(width) / background.width(), static_cast<double>(height) / background.height());
 
+
+    QJsonValue value = jsonObj.value("airports");
+//    qDebug() << value.toArray()[0].toObject()["name"].toString();
+    QJsonArray array = value.toArray();
+
+
+    for(int i = 0; i < array.size(); i++) {
+        // Create an airport and add it to scene
+        QJsonObject airport = array[i].toObject();
+        airports.push_back(new Airport(airport["name"].toString()));
+        QJsonArray position = airport["position"].toArray();
+        QPoint pos(position[0].toInt(), position[1].toInt());
+        airports[i]->setPos(mapToScene(pos));
+
+        scene->addItem(airports[i]);
+    }
     show();
+}
+
+static double distanceSquared(QPointF p, QPointF q)
+{
+    return (p.x() - q.x()) * (p.x() - q.x()) + (p.y() - q.y()) * (p.y() - q.y());
 }
 
 void Controller::mousePressEvent(QMouseEvent *event)
 {
     // Spawn a new airplane on the clicked location (this is for testing purposes)
-    if(event->button() == Qt::RightButton){
-        Airplane* plane = new Airplane(mapToScene(event->pos()), airport->pos(), Airplane::fuelCap);
-        airport->planes.push_back(plane);
+    if(event->button() == Qt::RightButton) {
+        // This airplane's target is the closest airport
+        auto closest = std::min_element(airports.cbegin(), airports.cend(),
+                                        [event](Airport* a1, Airport* a2)
+                                        {return distanceSquared(a1->pos(), event->pos()) <
+                                                distanceSquared(a2->pos(), event->pos());});
+        Airplane* plane = new Airplane(mapToScene(event->pos()), (*closest)->pos(), Airplane::fuelCap);
+        (*closest)->planes.push_back(plane);
         scene->addItem(plane);
-    }else if(event->button() == Qt::LeftButton){
-        foreach (Airplane* plane, airport->planes) {
-//            qDebug() << plane->boundingRect();
-            if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
+        qDebug() << event->pos();
+    } else if(event->button() == Qt::LeftButton) {
+        for(Airport* airport : airports) {
+            foreach (Airplane* plane, airport->planes) {
+    //            qDebug() << plane->boundingRect();
+                if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
 
-                if(focused_plane) focused_plane->setState(State::FLYING);
+                    if(focused_plane) focused_plane->setState(State::FLYING);
 
-                focused_plane = plane;
-                focused_plane->setState(State::MANUAL);
-                qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;
-                break;
+                    focused_plane = plane;
+                    focused_plane->setState(State::MANUAL);
+                    qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;
+                    break;
+                }
             }
         }
     }
@@ -89,11 +137,12 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        if(airport->currentPlane && (airport->currentPlane->getState() == State::LANDING || airport->currentPlane->getState() == State::REFUELING)){
+        if(airports[0]->currentPlane && (airports[0]->currentPlane->getState() == State::LANDING
+                                         || airports[0]->currentPlane->getState() == State::REFUELING)){
             qDebug() << "Another plane currently landing";
             return;
         }
-        airport->currentPlane = focused_plane;
+        airports[0]->currentPlane = focused_plane;
         focused_plane->setState(State::FLYING);
         focused_plane = nullptr;
     }
@@ -101,6 +150,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
 
 void Controller::update()
 {
+    // trebalo bi da je nepotrebno jer je QPointer
     if(focused_plane){
         if(focused_plane->getState() == State::CRASHED){
             focused_plane = nullptr;
@@ -111,33 +161,39 @@ void Controller::update()
     static std::mt19937 gen(rd());
     static std::uniform_real_distribution<double> random(0, 1);
 
-    static int max_planes = 10;
+    std::uniform_int_distribution<int> randomDiscrete(0, airports.size());
 
-    if(random(gen) > 0.95 && airport->planes.size() < max_planes){
-        double a = random(gen) * 2 * M_PI;
-        double r = 500 + random(gen) * 200;
-        QPoint pos;
-        pos.setX(r * cos(a) + 300);
-        pos.setY(r * sin(a) + 300);
+    static int max_planes = 1;
 
-        Airplane* plane = new Airplane(pos, airport->pos(), Airplane::fuelCap);
-        airport->planes.push_back(plane);
-        scene->addItem(plane);
+    for(int i = 0; i < airports.size(); i++) {
+        if(random(gen) > 0.95 && airports[i]->planes.size() < max_planes){
+            double a = random(gen) * 2 * M_PI;
+            double r = 500 + random(gen) * 200;
+            QPointF pos;
+            pos.setX(r * cos(a) + 300);
+            pos.setY(r * sin(a) + 300);
+
+
+
+            Airplane* plane = new Airplane(pos, airports[i]->pos(), Airplane::fuelCap);
+            airports[i]->planes.push_back(plane);
+            scene->addItem(plane);
+        }
     }
 
+//    samo prolazi...
+//    if(random(gen) > 0.998){
+//        double a = random(gen) * 2 * M_PI;
+//        double r = 600;
+//        QPoint pos, tar;
+//        pos.setX(r * cos(a) + 300);
+//        pos.setY(r * sin(a) + 300);
 
-    if(random(gen) > 0.998){
-        double a = random(gen) * 2 * M_PI;
-        double r = 600;
-        QPoint pos, tar;
-        pos.setX(r * cos(a) + 300);
-        pos.setY(r * sin(a) + 300);
+//        a = random(gen) * 2 * M_PI;
+//        tar.setX(r * cos(a) + 300);
+//        tar.setY(r * sin(a) + 300);
 
-        a = random(gen) * 2 * M_PI;
-        tar.setX(r * cos(a) + 300);
-        tar.setY(r * sin(a) + 300);
-
-        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
-        scene->addItem(plane);
-    }
+//        Airplane* plane = new Airplane(pos, tar, Airplane::fuelCap);
+//        scene->addItem(plane);
+//    }
 }

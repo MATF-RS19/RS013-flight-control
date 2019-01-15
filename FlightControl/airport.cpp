@@ -1,6 +1,7 @@
 ﻿#include "airport.h"
 
-Airport::Airport()
+Airport::Airport(QString name)
+    : name(name)
 {
     setRect(0,0,20,20);
 
@@ -19,10 +20,21 @@ Airport::~Airport()
     delete timer;
 }
 
+QRectF Airport::boundingRect() const
+{
+    return QRectF(0, 0, 40, 40);
+}
+
 void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     QPixmap img(":/images/02_airport.png");
     painter->drawPixmap(-15, -15, 30, 30, img);
+
+    QFont font = painter->font();
+    font.setPointSize(font.pointSize() * 2);
+    painter->setFont(font);
+    painter->drawText(0, -10, name);
+
     painter->setRenderHint(QPainter::Antialiasing);
 }
 

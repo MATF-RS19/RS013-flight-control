@@ -9,5 +9,7 @@
         <file>controller.h</file>
         <file>main.cpp</file>
         <file>images/02_airport.png</file>
+        <file>images/europe.png</file>
+        <file>data/airports.json</file>
     </qresource>
 </RCC>

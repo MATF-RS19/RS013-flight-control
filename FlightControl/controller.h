@@ -18,7 +18,7 @@ Q_OBJECT
 public:
     Controller(int width, int height);
 
-    void run();
+    void run(int width, int height);
     void mousePressEvent(QMouseEvent* event);
     void keyPressEvent(QKeyEvent* event);
 
@@ -27,13 +27,13 @@ public slots:
 
 private:
     QGraphicsScene* scene;
-    Airport* airport;
-//    std::vector<Airplane*> planes;
+    QVector<Airport*> airports;
 
     QPointer<Airplane> focused_plane;
 
     const static int width;
     const static int height;
+
 };
 
 #endif // CONTROLLER_H

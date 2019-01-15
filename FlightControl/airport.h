@@ -6,13 +6,15 @@
 #include <QPointer>
 #include <QPainter>
 
-class Airport : public QObject, public QGraphicsEllipseItem{
+class Airport : public QObject, public QGraphicsEllipseItem {
 
 Q_OBJECT
 
 public:
-    Airport();
+    Airport(QString name);
     ~Airport();
+
+    QRectF boundingRect() const override;
 
     void paint(QPainter *painter,
                const QStyleOptionGraphicsItem *option,
@@ -25,6 +27,8 @@ public slots:
     void update();
 
 private:
+    QString name;
+
     double radarRadius;
 
     void schedule();
