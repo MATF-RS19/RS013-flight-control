@@ -17,7 +17,8 @@ Controller::Controller(int width, int height)
 //    fitInView(sceneRect(), Qt::KeepAspectRatio);
     setScene(scene);
 
-
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     focused_plane = nullptr;
 
@@ -26,6 +27,7 @@ Controller::Controller(int width, int height)
     connect(&t, SIGNAL(timeout()), this, SLOT(update()));
     t.start(50);
 
+    scaleCounter = 0;
 
     run(width, height);
 }
@@ -41,11 +43,14 @@ void Controller::run(int width, int height)
 
     QJsonValue map = jsonObj.value("map");
     QPixmap background(map.toString());
+    setSceneRect(0, 0, background.width(), background.height());
 //    background = background.scaled(width, height, Qt::IgnoreAspectRatio);
     setCacheMode(QGraphicsView::CacheBackground);
-    setBackgroundBrush(background);
     setTransformationAnchor(QGraphicsView::NoAnchor);
-    scale(static_cast<double>(width) / background.width(), static_cast<double>(height) / background.height());
+    double scaleX = static_cast<double>(width) / background.width();
+    double scaleY = static_cast<double>(height) / background.height();
+    scale(scaleX, scaleY);
+    setBackgroundBrush(background);
 
 
     QJsonValue value = jsonObj.value("airports");
@@ -99,6 +104,24 @@ void Controller::mousePressEvent(QMouseEvent *event)
                 }
             }
         }
+    } else if(event->button() == Qt::MiddleButton){
+        // Store original position.
+        originX = event->x();
+        originY = event->y();
+    }
+}
+
+void Controller::mouseMoveEvent(QMouseEvent *event)
+{
+    if(event->buttons() & Qt::MidButton){
+        QPointF oldp = mapToScene(originX, originY);
+        QPointF newp = mapToScene(event->pos());
+        QPointF translation = newp - oldp;
+
+        translate(translation.x(), translation.y());
+
+        originX = event->x();
+        originY = event->y();
     }
 }
 
@@ -145,6 +168,19 @@ void Controller::keyPressEvent(QKeyEvent *event)
         airports[0]->currentPlane = focused_plane;
         focused_plane->setState(State::FLYING);
         focused_plane = nullptr;
+    }
+}
+
+void Controller::wheelEvent(QWheelEvent *event)
+{
+    if(event->delta() > 0){
+        scaleCounter++;
+        scale(1.25, 1.25);
+    }else{
+        if(scaleCounter > 0) {
+            scaleCounter--;
+            scale(0.8, 0.8);
+        }
     }
 }
 

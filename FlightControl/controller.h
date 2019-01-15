@@ -18,9 +18,7 @@ Q_OBJECT
 public:
     Controller(int width, int height);
 
-    void run(int width, int height);
-    void mousePressEvent(QMouseEvent* event);
-    void keyPressEvent(QKeyEvent* event);
+
 
 public slots:
     void update();
@@ -33,6 +31,18 @@ private:
 
     const static int width;
     const static int height;
+
+    void run(int width, int height);
+
+    void mousePressEvent(QMouseEvent* event);
+    void mouseMoveEvent(QMouseEvent* event);
+    void keyPressEvent(QKeyEvent* event);
+    void wheelEvent(QWheelEvent* event);
+
+    int scaleCounter;
+
+    double originX;
+    double originY;
 
 };
 
