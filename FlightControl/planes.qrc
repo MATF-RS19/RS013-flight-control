@@ -8,8 +8,10 @@
         <file>controller.cpp</file>
         <file>controller.h</file>
         <file>main.cpp</file>
-        <file>images/02_airport.png</file>
         <file>images/europe.png</file>
         <file>data/airports.json</file>
+        <file>images/00_airport.png</file>
+        <file>images/02_airplane.png</file>
+        <file>images/03_airplane.png</file>
     </qresource>
 </RCC>

@@ -5,7 +5,7 @@ Airport::Airport(QString name)
 {
     setRect(0,0,20,20);
 
-    radarRadius = 200;
+    radarRadius = 100;
     occupied = false;
 
     // Call update() every 50 miliseconds
@@ -22,12 +22,12 @@ Airport::~Airport()
 
 QRectF Airport::boundingRect() const
 {
-    return QRectF(0, 0, 40, 40);
+    return QRectF(-20, -20, 40, 40);
 }
 
 void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    QPixmap img(":/images/02_airport.png");
+    QPixmap img(":/images/00_airport.png");
     painter->drawPixmap(-15, -15, 30, 30, img);
 
     QFont font = painter->font();
@@ -36,6 +36,14 @@ void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     painter->drawText(0, -10, name);
 
     painter->setRenderHint(QPainter::Antialiasing);
+
+    if(isSelected())
+        painter->drawRect(boundingRect());
+}
+
+QString Airport::getName()
+{
+    return name;
 }
 
 void Airport::update()
@@ -44,9 +52,6 @@ void Airport::update()
                                 [](const QPointer<Airplane>& p){return p.isNull();}),
                 planes.end());
 
-//    if(currentPlane && !currentPlane->isIncoming()) {
-//        currentPlane = nullptr;
-//    }
     if(!planes.empty()){
         schedule();
     }
@@ -63,7 +68,7 @@ double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
 
     for(const auto& p : planes) {
         // plane moving straight to airport
-        double optimalFuel = p->getDistance() / Airplane::speed;
+        double optimalFuel = Airplane::fuelUse * p->getDistance() / Airplane::speed;
         totalFuel += optimalFuel;
         // plane is going to run out of fuel
         if(totalFuel > p->getFuel()) {

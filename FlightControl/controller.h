@@ -22,12 +22,16 @@ public:
 
 public slots:
     void update();
+    void spawnPlanes();
 
 private:
     QGraphicsScene* scene;
     QVector<Airport*> airports;
 
     QPointer<Airplane> focused_plane;
+    QPointer<Airport> selected_airport1;
+    QPointer<Airport> selected_airport2;
+
 
     const static int width;
     const static int height;

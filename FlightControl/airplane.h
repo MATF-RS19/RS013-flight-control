@@ -9,12 +9,12 @@
 #include <QTimer>
 #include <QGraphicsScene>
 
-enum class State {FLYING, HOLDING, LANDING, CRASHED, MANUAL, DANGER};
+enum class State {FLYING, HOLDING, CRASHED, MANUAL, DANGER};
 
 class Airplane: public QObject, public QGraphicsItem{
     Q_OBJECT
 public:
-    Airplane(QPointF pos, const QPointF target, double fuel);
+    Airplane(QPointF pos, const QPointF target);
     ~Airplane();
 
     QRectF boundingRect() const override;
@@ -60,7 +60,7 @@ public slots:
 private:
     void moveToTarget();
     void holdingPattern();
-    void landAndRefuel();
+    void land();
 
     double calculateAngle();
 
@@ -84,8 +84,6 @@ private:
     QPointF direction;
 
     double currentAngle;
-
-    QTimer *timer;
 };
 
 #endif // MYRECT_H

@@ -16,18 +16,27 @@ Controller::Controller(int width, int height)
     setFixedSize(width, height);
 //    fitInView(sceneRect(), Qt::KeepAspectRatio);
     setScene(scene);
+    setMouseTracking(true);
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     focused_plane = nullptr;
+    selected_airport1 = nullptr;
+    selected_airport2 = nullptr;
 
     // Call update() every 50 miliseconds
     static QTimer t;
     connect(&t, SIGNAL(timeout()), this, SLOT(update()));
-    t.start(15000);
+    t.start(50);
+
+    // Call spawnPlanes() every 15 seconds
+    static QTimer t1;
+    connect(&t1, SIGNAL(timeout()), this, SLOT(spawnPlanes()));
+    t1.start(15000);
 
     scaleCounter = 0;
+
 
     run(width, height);
 }
@@ -66,8 +75,8 @@ void Controller::run(int width, int height)
         QPoint pos(position[0].toInt(), position[1].toInt());
         airports[i]->setPos(mapToScene(pos));
 
-        QPointF tmp = mapToScene(pos);
-
+//        QPointF tmp = mapToScene(pos);
+        airports[i]->setFlag(QGraphicsItem::ItemIsSelectable, true);
         scene->addItem(airports[i]);
 //        scene->addEllipse(tmp.x()-airports[i]->radarRadius/2, tmp.y()-airports[i]->radarRadius/2, airports[i]->radarRadius,airports[i]->radarRadius);
     }
@@ -96,12 +105,30 @@ void Controller::mousePressEvent(QMouseEvent *event)
     // Spawn a new airplane on the clicked location (this is for testing purposes)
     if(event->button() == Qt::RightButton) {
         auto closest = findClosestAirport(mapToScene(event->pos()));
-        Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos(), Airplane::fuelCap);
+        Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos());
         closest->planes.push_back(plane);
         scene->addItem(plane);
 //        qDebug() <<mapToScene(event->pos());
+
     } else if(event->button() == Qt::LeftButton) {
+
         for(Airport* airport : airports) {
+            // Check if this airport is clicked
+            if(airport->sceneBoundingRect().contains((mapToScene(event->pos())))){
+                if(!selected_airport1){
+                    qDebug() << "Selected airport: " << airport->getName();
+                    selected_airport1 = airport;
+                    selected_airport1->setSelected(true);
+                }else if(selected_airport1 != airport && !selected_airport2){
+                    qDebug() << "Selected airport: " << airport->getName();
+                    selected_airport2 = airport;
+                    selected_airport2->setSelected(true);
+                }
+                return;
+            }
+
+
+            // Check if airplane is clicked
             foreach (Airplane* plane, airport->planes) {
     //            qDebug() << plane->boundingRect();
                 if(plane->sceneBoundingRect().contains((mapToScene(event->pos())))){
@@ -109,13 +136,30 @@ void Controller::mousePressEvent(QMouseEvent *event)
                     if(focused_plane) focused_plane->setState(State::FLYING);
 
                     focused_plane = plane;
+
                     focused_plane->setState(State::MANUAL);
-                    qDebug() << "Assumed manual control of plane " << focused_plane->flightNo;
-                    break;
+                    qDebug() << "Manual control of flight " << focused_plane->flightNo;
+                    return;
                 }
             }
         }
-    } else if(event->button() == Qt::MiddleButton){
+
+        if(focused_plane){
+           focused_plane->setState(State::FLYING);
+           focused_plane = nullptr;
+        }
+
+        if(selected_airport1){
+            selected_airport1->setSelected(false);
+            selected_airport1 = nullptr;
+        }
+        if(selected_airport2){
+            selected_airport2->setSelected(false);
+            selected_airport2 = nullptr;
+        }
+
+
+    } else if(event->button() == Qt::MiddleButton && !focused_plane){
         // Store original position.
         originX = event->x();
         originY = event->y();
@@ -124,7 +168,8 @@ void Controller::mousePressEvent(QMouseEvent *event)
 
 void Controller::mouseMoveEvent(QMouseEvent *event)
 {
-    if(event->buttons() & Qt::MidButton){
+
+    if((event->buttons() & Qt::MidButton) && !focused_plane){
         QPointF oldp = mapToScene(originX, originY);
         QPointF newp = mapToScene(event->pos());
         QPointF translation = newp - oldp;
@@ -144,7 +189,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        focused_plane->steer(-0.025);
+        focused_plane->steer(-Airplane::maxAngle);
 
     }else if(event->key() == Qt::Key_Right){
 
@@ -152,7 +197,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        focused_plane->steer(0.025);
+        focused_plane->steer(Airplane::maxAngle);
 
     }else if(event->key() == Qt::Key_Up){
 
@@ -172,12 +217,8 @@ void Controller::keyPressEvent(QKeyEvent *event)
             return;
         }
 
-
-        // Manual control is intended for dangerous situations
-        // If a plane is running low on fuel even though its target is too far it should find nearest airport to land
-
-        auto closest = findClosestAirport(focused_plane->pos());
-
+        // land on selected airport or automaticaly find a nearest airport to land
+        auto closest = selected_airport1 ? (Airport*)selected_airport1 : findClosestAirport(focused_plane->pos());
         // Move this plane from previous target airport to closest airport
         auto targetPos = focused_plane->getTarget();
         auto currentTargetIt = std::find_if(airports.begin(), airports.end(),
@@ -189,18 +230,25 @@ void Controller::keyPressEvent(QKeyEvent *event)
 
         focused_plane->setTarget(closest->pos());
 
-        if(closest->currentPlane && (closest->currentPlane->getState() == State::LANDING)){
-            qDebug() << "Another plane currently landing";
-            return;
-        }
         closest->currentPlane = focused_plane;
         focused_plane->setState(State::FLYING);
         focused_plane = nullptr;
+
+    }else if(event->key() == Qt::Key_1){
+        if(selected_airport1 && selected_airport2){
+            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos());
+            qDebug() << "Flight-" + QString::number(plane->flightNo) << ":" << selected_airport1->getName() << " --> " << selected_airport2->getName();
+            selected_airport2->planes.push_back(plane);
+            scene->addItem(plane);
+        }
     }
 }
 
 void Controller::wheelEvent(QWheelEvent *event)
 {
+
+    QPointF oldp = mapToScene(event->pos());
+
     if(event->delta() > 0){
         scaleCounter++;
         scale(1.25, 1.25);
@@ -210,10 +258,32 @@ void Controller::wheelEvent(QWheelEvent *event)
             scale(0.8, 0.8);
         }
     }
+
+    QPointF newp = mapToScene(event->pos());
+
+    QPointF translation = newp - oldp;
+
+    translate(translation.x(), translation.y());
 }
 
 void Controller::update()
 {
+
+    if(focused_plane){
+        originX = viewport()->size().width()/2;
+        originY = viewport()->size().height()/2;
+
+        QPointF oldp(mapToScene(originX, originY));
+        QPointF newp(focused_plane->pos().x(), focused_plane->pos().y());
+        QPointF translation = oldp - newp;
+
+        translate(translation.x(), translation.y());
+    }
+}
+
+void Controller::spawnPlanes()
+{
+
     static std::random_device rd;
     static std::mt19937 gen(rd());
 
@@ -225,7 +295,8 @@ void Controller::update()
 //            qDebug() << randomIdx;
             int targetIdx = (i + randomIdx) % airports.size();
 //            qDebug() << targetIdx;
-            Airplane* plane = new Airplane(airports[i]->pos(), airports[targetIdx]->pos(), Airplane::fuelCap);
+            Airplane* plane = new Airplane(airports[i]->pos(), airports[targetIdx]->pos());
+            qDebug() << "Flight-" + QString::number(plane->flightNo) << ":" << airports[i]->getName() << " --> " << airports[targetIdx]->getName();
             airports[targetIdx]->planes.push_back(plane);
             scene->addItem(plane);
     }

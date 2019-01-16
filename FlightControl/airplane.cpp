@@ -7,7 +7,7 @@
 const double Airplane::fuelUse = 1;
 const double Airplane::fuelCap = 2000;
 const double Airplane::speed = 2.5;
-const double Airplane::maxAngle = 0.05;
+const double Airplane::maxAngle = 0.11;
 int Airplane::nOfPlanes = 0;
 
 static double normalizeAngle(double angle)
@@ -37,7 +37,7 @@ double Airplane::calculateAngle()
     return angle;
 }
 
-Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
+Airplane::Airplane(QPointF pos, const QPointF target)
 {
     setPos(pos);
 
@@ -48,7 +48,7 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     // Plane is flying from pos to target, and spawns with some fuel
     setOrigin(pos);
     setTarget(target);
-    this->fuel = fuel;
+    fuel = fuelCap;
     state = State::FLYING;
 
     flightNo = nOfPlanes++;
@@ -63,24 +63,23 @@ Airplane::Airplane(QPointF pos, const QPointF target, double fuel)
     setRotation(currentAngle);
 
     // Call update() every 50 miliseconds
-    static QTimer timer;
-    connect(&timer, SIGNAL(timeout()), this, SLOT(update()));
-    timer.start(50);
+    static QTimer timer1;
+    connect(&timer1, SIGNAL(timeout()), this, SLOT(update()));
+    timer1.start(50);
 
     // Move the plane ever 50 miliseconds
     //TODO static timer instead of member
-    this->timer = new QTimer();
-    connect(this->timer, SIGNAL(timeout()), this, SLOT(move()));
-    this->timer->start(50);
+    static QTimer timer2;
+    connect(&timer2, SIGNAL(timeout()), this, SLOT(move()));
+    timer2.start(50);
 
-
+//    qDebug() << "Flight-" + QString::number(flightNo) + " taking off";
 //    qDebug() << "Spawned a plane at " << pos;
 
 }
 
 Airplane::~Airplane()
 {
-    delete timer;
 //    qDebug() << "Flight-" + QString::number(flightNo) + " just State::CRASHED";
 }
 
@@ -179,16 +178,7 @@ void Airplane::move(){
         moveToTarget();
     }else if(state == State::HOLDING){
         holdingPattern();
-    }else if(state == State::LANDING){
-        landAndRefuel();
-    }/*else if(state == State::REFUELING){
-        if(!incoming){
-            deleteLater();
-        }
-        incoming = !incoming;
-        timer->start(50);
-        state = State::FLYING;
-    }*/
+    }
 
 
 }
@@ -213,7 +203,7 @@ void Airplane::update()
 
     for (auto item: dangerPlanes) {
 
-        if(state == State::LANDING || state == State::MANUAL) {
+        if(state == State::MANUAL) {
             inDanger = false;
             break;
         }
@@ -294,9 +284,9 @@ void Airplane::moveToTarget(){
     QPointF d = pos() - target;
     double toTarget = qSqrt(d.x() * d.x() + d.y() * d.y());
 
-    if(toTarget <= 5) {
+    if(toTarget <= 15) {
 //        qDebug() << "aaa";
-        state = State::LANDING;
+        land();
     }
 
     // Determine if the plane should steer left or right
@@ -326,22 +316,15 @@ void Airplane::moveToTarget(){
 void Airplane::holdingPattern(){
     wastedFuel += fuelUse;
     if(steerLeft) {
-        steer(-0.025);
+        steer(-maxAngle);
     } else {
-        steer(0.025);
+        steer(maxAngle);
     }
-//    steer(0.025);
 }
 
-void Airplane::landAndRefuel(){
+void Airplane::land(){
 
-//    timer->start(1000);
-    qDebug() << "Flight-" + QString::number(flightNo) + " arrived to target";
-//    QPointF t = target;
-//    setTarget(origin);
-//    setOrigin(t);
-//    state = State::REFUELING;
-//    this->fuel = fuelCap;
+    qDebug() << "Flight-" + QString::number(flightNo) + " just landed";
     deleteLater();
 }
 

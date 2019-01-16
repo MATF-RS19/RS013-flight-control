@@ -23,6 +23,8 @@ public:
     QVector<QPointer<Airplane>> planes;
     QPointer<Airplane> currentPlane;
 
+    QString getName();
+
 public slots:
     void update();
 
