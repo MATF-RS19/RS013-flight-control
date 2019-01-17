@@ -11,11 +11,19 @@
 
 enum class State {FLYING, HOLDING, CRASHED, MANUAL, DANGER};
 
+struct AirplaneData{
+    QString image;
+    double fuelCap;
+    double fuelUse;
+    double speed;
+    double maxAngle;
+};
+
 class Airplane: public QObject, public QGraphicsItem {
     Q_OBJECT
 public:
 
-    Airplane(QPointF pos, const QPointF target, int type=0);
+    Airplane(QPointF pos, const QPointF target, int type=-1);
 
     ~Airplane();
 
@@ -52,6 +60,8 @@ public:
     const double fuelCap;
     const double fuelUse;
 
+    static QVector<AirplaneData> data;
+
     // The function changes the direction of the plane by angle theta
     void steer(double theta);
 
@@ -63,12 +73,6 @@ signals:
     void finished(const QString&, bool);
 
 private:
-
-    static QString initImage(int type);
-    static double initFuelCap(int type);
-    static double initFuelUse(int type);
-    static double initSpeed(int type);
-    static double initMaxAngle(int type);
 
     void moveToTarget();
     void holdingPattern();

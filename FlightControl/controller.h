@@ -49,6 +49,7 @@ private:
     void wheelEvent(QWheelEvent* event);
 
     int scaleCounter;
+    int planeCounter;
 
     double originX;
     double originY;
