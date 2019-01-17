@@ -13,5 +13,6 @@
         <file>images/00_airport.png</file>
         <file>images/02_airplane.png</file>
         <file>images/03_airplane.png</file>
+        <file>data/airplanes.json</file>
     </qresource>
 </RCC>

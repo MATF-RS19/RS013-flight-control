@@ -6,6 +6,8 @@
 
 int Airplane::nOfPlanes = 0;
 
+QVector<AirplaneData> Airplane::data {};
+
 static double normalizeAngle(double angle)
 {
     while (angle < 0) {
@@ -34,8 +36,8 @@ double Airplane::calculateAngle()
 }
 
 Airplane::Airplane(QPointF pos, const QPointF target, int t)
-    : type(t == 0 ? 1 + nOfPlanes % 3 : t),
-      image(initImage(type)), speed(initSpeed(type)), maxAngle(initMaxAngle(type)), fuelCap(initFuelCap(type)), fuelUse(initFuelUse(type))
+    : type(t == -1 ? nOfPlanes % data.size() : t),
+      image(data[type].image), speed(data[type].speed), maxAngle(data[type].maxAngle), fuelCap(data[type].fuelCap), fuelUse(data[type].fuelUse)
 {
     setPos(pos);
 
@@ -179,51 +181,6 @@ void Airplane::move(){
     }
 
 
-}
-
-QString Airplane::initImage(int type)
-{
-    QString image;
-    if(type == 1) image = QString(":/images/01_airplane.png");
-    else if(type == 2) image = QString(":/images/02_airplane.png");
-    else if(type == 3) image = QString(":/images/03_airplane.png");
-    return image;
-}
-
-double Airplane::initFuelCap(int type)
-{
-    double fuelCap;
-    if(type == 1) fuelCap = 2000;
-    else if(type == 2) fuelCap = 4000;
-    else if(type == 3) fuelCap = 1500;
-    return fuelCap;
-}
-
-double Airplane::initFuelUse(int type)
-{
-    double fuelUse;
-    if(type == 1) fuelUse = 1;
-    else if(type == 2) fuelUse = 1;
-    else if(type == 3) fuelUse = 1;
-    return fuelUse;
-}
-
-double Airplane::initSpeed(int type)
-{
-    double speed;
-    if(type == 1) speed = 2.5;
-    else if(type == 2) speed = 1.25;
-    else if(type == 3) speed = 3;
-    return speed;
-}
-
-double Airplane::initMaxAngle(int type)
-{
-    double maxAngle;
-    if(type == 1) maxAngle = 0.1;
-    else if(type == 2) maxAngle = 0.07;
-    else if(type == 3) maxAngle = 0.15;
-    return maxAngle;
 }
 
 void Airplane::update()

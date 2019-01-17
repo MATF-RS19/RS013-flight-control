@@ -38,13 +38,15 @@ Controller::Controller(int width, int height)
     t1.start(15000);
 
     scaleCounter = 0;
-
+    planeCounter = 0;
 
     run(width, height);
 }
 
 void Controller::run(int width, int height)
 {
+
+    // READ AIRPORT DATA FROM JSON
     QFile file(":/data/airports.json");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString val = file.readAll();
@@ -82,6 +84,28 @@ void Controller::run(int width, int height)
         scene->addItem(airports[i]);
 //        scene->addEllipse(tmp.x()-airports[i]->radarRadius/2, tmp.y()-airports[i]->radarRadius/2, airports[i]->radarRadius,airports[i]->radarRadius);
     }
+
+    // READ AIRPLANE DATA FROM JSON
+    QFile file1(":/data/airplanes.json");
+    file1.open(QIODevice::ReadOnly | QIODevice::Text);
+    val = file1.readAll();
+    doc = QJsonDocument::fromJson(val.toUtf8());
+//    qDebug() << doc;
+    jsonObj = doc.object();
+    value = jsonObj.value("airplanes");
+    array = value.toArray();
+
+    for(int i = 0; i < array.size(); i++){
+        QJsonObject airplane = array[i].toObject();
+        AirplaneData data;
+        data.image = airplane["image"].toString();
+        data.fuelCap = airplane["fuelCap"].toDouble();
+        data.fuelUse = airplane["fuelUse"].toDouble();
+        data.speed = airplane["speed"].toDouble();
+        data.maxAngle = airplane["maxAngle"].toDouble();
+        Airplane::data.push_back(data);
+    }
+
     show();
 }
 
@@ -175,13 +199,12 @@ void Controller::mousePressEvent(QMouseEvent *event)
 
 void Controller::mouseMoveEvent(QMouseEvent *event)
 {
-
     emit airplaneInfo(QString());
     for(auto& item: scene->items()) {
         if(item->sceneBoundingRect().contains(mapToScene(event->pos()))) {
             Airplane* plane = dynamic_cast<Airplane*>(item);
             if(plane) {
-                QString s = "Flight-" + QString::number(plane->flightNo);
+                QString s = "Flight-" + QString::number(plane->flightNo) + ", fuel left: " + QString::number(plane->getFuel());
                 emit airplaneInfo(s);
             }
         }
@@ -254,31 +277,21 @@ void Controller::keyPressEvent(QKeyEvent *event)
 
     }else if(event->key() == Qt::Key_1){
         if(selected_airport1 && selected_airport2){
-            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 1);
+            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), planeCounter);
             QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
                     selected_airport1->getName() + " --> " + selected_airport2->getName();
             emit flightInfo(s);
             selected_airport2->planes.push_back(plane);
             scene->addItem(plane);
         }
+
     }else if(event->key() == Qt::Key_2){
-        if(selected_airport1 && selected_airport2){
-            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 3);
-            QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
-                    selected_airport1->getName() + " --> " + selected_airport2->getName();
-            emit flightInfo(s);
-            selected_airport2->planes.push_back(plane);
-            scene->addItem(plane);
-        }
+        if(++planeCounter >= Airplane::data.size()) planeCounter = -1;
+        qDebug() << "Selected plane type " << planeCounter << "(-1 for auto)";
+
     }else if(event->key() == Qt::Key_3){
-        if(selected_airport1 && selected_airport2){
-            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 2);
-            QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
-                    selected_airport1->getName() + " --> " + selected_airport2->getName();
-            emit flightInfo(s);
-            selected_airport2->planes.push_back(plane);
-            scene->addItem(plane);
-        }
+        if(--planeCounter < -1) planeCounter = Airplane::data.size()-1;
+        qDebug() << "Selected plane type " << planeCounter << "(-1 for auto)";
     }
 }
 
