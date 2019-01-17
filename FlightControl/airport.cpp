@@ -27,6 +27,7 @@ QRectF Airport::boundingRect() const
 
 void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
+    painter->setRenderHint(QPainter::Antialiasing);
     QPixmap img(":/images/00_airport.png");
     painter->drawPixmap(-15, -15, 30, 30, img);
 
@@ -35,7 +36,6 @@ void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     painter->setFont(font);
     painter->drawText(0, -10, name);
 
-    painter->setRenderHint(QPainter::Antialiasing);
 
     if(isSelected())
         painter->drawRect(boundingRect());
@@ -68,7 +68,7 @@ double Airport::solutionValue(const QVector<QPointer<Airplane>>& planes)
 
     for(const auto& p : planes) {
         // plane moving straight to airport
-        double optimalFuel = Airplane::fuelUse * p->getDistance() / Airplane::speed;
+        double optimalFuel = p->fuelUse * p->getDistance() / p->speed;
         totalFuel += optimalFuel;
         // plane is going to run out of fuel
         if(totalFuel > p->getFuel()) {

@@ -4,10 +4,6 @@
 #include <cmath>
 #include <QRectF>
 
-const double Airplane::fuelUse = 1;
-const double Airplane::fuelCap = 2000;
-const double Airplane::speed = 2.5;
-const double Airplane::maxAngle = 0.11;
 int Airplane::nOfPlanes = 0;
 
 static double normalizeAngle(double angle)
@@ -37,7 +33,9 @@ double Airplane::calculateAngle()
     return angle;
 }
 
-Airplane::Airplane(QPointF pos, const QPointF target)
+Airplane::Airplane(QPointF pos, const QPointF target, int t)
+    : type(t == 0 ? 1 + nOfPlanes % 3 : t),
+      image(initImage(type)), speed(initSpeed(type)), maxAngle(initMaxAngle(type)), fuelCap(initFuelCap(type)), fuelUse(initFuelUse(type))
 {
     setPos(pos);
 
@@ -103,7 +101,8 @@ QPainterPath Airplane::shape() const
 
 void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    QPixmap img(":/images/01_airplane.png");
+    painter->setRenderHint(QPainter::Antialiasing);
+    QPixmap img(image);
 //    painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
 //    painter->fillRect(img.rect(), Qt::red);
     painter->drawPixmap(-20, -20, 40, 50, img);
@@ -123,7 +122,6 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     painter->setBrush(QColor(r, g, b));
     painter->drawRect(-15, 30, static_cast<int>(30 * fuelRatio), 5);
 
-    painter->setRenderHint(QPainter::Antialiasing);
 }
 
 State Airplane::getState()
@@ -157,7 +155,7 @@ double Airplane::getWastedFuel()
 double Airplane::calcFuel(QPointF o, QPointF t)
 {
     QPointF d = o - t;
-    return qSqrt(d.x() * d.x() + d.y() * d.y()) / Airplane::speed;
+    return qSqrt(d.x() * d.x() + d.y() * d.y()) / speed;
 }
 
 void Airplane::move(){
@@ -181,6 +179,51 @@ void Airplane::move(){
     }
 
 
+}
+
+QString Airplane::initImage(int type)
+{
+    QString image;
+    if(type == 1) image = QString(":/images/01_airplane.png");
+    else if(type == 2) image = QString(":/images/02_airplane.png");
+    else if(type == 3) image = QString(":/images/03_airplane.png");
+    return image;
+}
+
+double Airplane::initFuelCap(int type)
+{
+    double fuelCap;
+    if(type == 1) fuelCap = 2000;
+    else if(type == 2) fuelCap = 4000;
+    else if(type == 3) fuelCap = 1500;
+    return fuelCap;
+}
+
+double Airplane::initFuelUse(int type)
+{
+    double fuelUse;
+    if(type == 1) fuelUse = 1;
+    else if(type == 2) fuelUse = 1;
+    else if(type == 3) fuelUse = 1;
+    return fuelUse;
+}
+
+double Airplane::initSpeed(int type)
+{
+    double speed;
+    if(type == 1) speed = 2.5;
+    else if(type == 2) speed = 1.25;
+    else if(type == 3) speed = 3;
+    return speed;
+}
+
+double Airplane::initMaxAngle(int type)
+{
+    double maxAngle;
+    if(type == 1) maxAngle = 0.1;
+    else if(type == 2) maxAngle = 0.07;
+    else if(type == 3) maxAngle = 0.15;
+    return maxAngle;
 }
 
 void Airplane::update()
@@ -211,7 +254,7 @@ void Airplane::update()
         if(item == this) continue;
         Airplane* plane = dynamic_cast<Airplane*>(item);
 
-        if(plane){
+        if(plane && plane->type == type){
             inDanger = true;
 
             QLineF lineToPlane(QPointF(0, 0), mapFromItem(item, 0, 0));
@@ -251,7 +294,7 @@ void Airplane::update()
 
         Airplane* plane = dynamic_cast<Airplane*>(item);
 
-        if(plane && plane->state != State::CRASHED){
+        if(plane && plane->state != State::CRASHED && plane->type == type){
 
             QString s = "Flight-" + QString::number(flightNo) + " crashed with "
                     + "Flight-" + QString::number(plane->flightNo);
@@ -264,6 +307,13 @@ void Airplane::update()
         }
     }
 
+    // If the fuel reaches critical point, nnotify the user
+    static bool low = false;
+    if(fuel <= fuelCap / 5 && !low){
+        low = true;
+        QString s = "Flight-" + QString::number(flightNo) + " is low on fuel";
+        emit finished(s, true);
+    }
 
     // If the fuel runs out, the plane crashes
     if(fuel <= 0){

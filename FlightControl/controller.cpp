@@ -13,7 +13,6 @@ Controller::Controller(int width, int height)
     setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
 
-
     setFixedSize(width, height);
 //    fitInView(sceneRect(), Qt::KeepAspectRatio);
     setScene(scene);
@@ -151,8 +150,8 @@ void Controller::mousePressEvent(QMouseEvent *event)
         }
 
         if(focused_plane){
-           focused_plane->setState(State::FLYING);
-           focused_plane = nullptr;
+            focused_plane->setState(State::FLYING);
+            focused_plane = nullptr;
         }
 
         if(selected_airport1){
@@ -195,7 +194,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        focused_plane->steer(-Airplane::maxAngle);
+        focused_plane->steer(-focused_plane->maxAngle);
 
     }else if(event->key() == Qt::Key_Right){
 
@@ -203,7 +202,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
             qDebug() << "No plane is focused";
             return;
         }
-        focused_plane->steer(Airplane::maxAngle);
+        focused_plane->steer(focused_plane->maxAngle);
 
     }else if(event->key() == Qt::Key_Up){
 
@@ -242,7 +241,25 @@ void Controller::keyPressEvent(QKeyEvent *event)
 
     }else if(event->key() == Qt::Key_1){
         if(selected_airport1 && selected_airport2){
-            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos());
+            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 1);
+            QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
+                    selected_airport1->getName() + " --> " + selected_airport2->getName();
+            emit flightInfo(s);
+            selected_airport2->planes.push_back(plane);
+            scene->addItem(plane);
+        }
+    }else if(event->key() == Qt::Key_2){
+        if(selected_airport1 && selected_airport2){
+            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 3);
+            QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
+                    selected_airport1->getName() + " --> " + selected_airport2->getName();
+            emit flightInfo(s);
+            selected_airport2->planes.push_back(plane);
+            scene->addItem(plane);
+        }
+    }else if(event->key() == Qt::Key_3){
+        if(selected_airport1 && selected_airport2){
+            Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos(), 2);
             QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
                     selected_airport1->getName() + " --> " + selected_airport2->getName();
             emit flightInfo(s);
@@ -297,12 +314,15 @@ void Controller::spawnPlanes()
 
     std::uniform_int_distribution<int> randomDiscrete(1, airports.size()-1);
 
-    for(int i = 0; i < airports.size(); i++) {
+    int num = randomDiscrete(gen);
+
+    for(int i = 0; i < num; i++) {
 
             int randomIdx = randomDiscrete(gen);
 //            qDebug() << randomIdx;
             int targetIdx = (i + randomIdx) % airports.size();
 //            qDebug() << targetIdx;
+
             Airplane* plane = new Airplane(airports[i]->pos(), airports[targetIdx]->pos());
             connect(plane, SIGNAL(finished(QString,bool)),
                     this, SLOT(planeFinished(QString,bool)));
@@ -312,6 +332,8 @@ void Controller::spawnPlanes()
             airports[targetIdx]->planes.push_back(plane);
             scene->addItem(plane);
     }
+
+    std::random_shuffle(airports.begin(), airports.end());
 
 }
 
