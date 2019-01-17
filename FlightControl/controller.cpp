@@ -4,6 +4,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QLabel>
+#include <QHBoxLayout>
 
 Controller::Controller(int width, int height)
 {
@@ -173,6 +175,17 @@ void Controller::mousePressEvent(QMouseEvent *event)
 
 void Controller::mouseMoveEvent(QMouseEvent *event)
 {
+
+    emit airplaneInfo(QString());
+    for(auto& item: scene->items()) {
+        if(item->sceneBoundingRect().contains(mapToScene(event->pos()))) {
+            Airplane* plane = dynamic_cast<Airplane*>(item);
+            if(plane) {
+                QString s = "Flight-" + QString::number(plane->flightNo);
+                emit airplaneInfo(s);
+            }
+        }
+    }
 
     if((event->buttons() & Qt::MidButton) && !focused_plane){
         QPointF oldp = mapToScene(originX, originY);

@@ -8,6 +8,8 @@
 #include <QDebug>
 #include <QPointer>
 #include <QTime>
+#include <QLabel>
+#include <QHBoxLayout>
 #include "airplane.h"
 #include "airport.h"
 
@@ -22,6 +24,7 @@ public:
 signals:
     void flightInfo(const QString&);
     void landingInfo(const QString&, bool);
+    void airplaneInfo(const QString&);
 
 public slots:
     void update();
@@ -54,6 +57,9 @@ private:
     double originY;
 
     Airport *findClosestAirport(const QPointF &airplanePos);
+
+    QVBoxLayout *layout;
+    QLabel *lbl;
 };
 
 #endif // CONTROLLER_H

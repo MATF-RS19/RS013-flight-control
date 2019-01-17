@@ -10,25 +10,47 @@ Log::Log(Controller *controller)
     move(800, 100);
     setWindowTitle("Log");
 
-    auto* layout = new QHBoxLayout();
-    setLayout(layout);
+    auto* layoutV = new QVBoxLayout();
+    setLayout(layoutV);
 
-    //TODO: naslovi za ova dva
+    auto* layoutHTextBrowsers = new QHBoxLayout();
+    auto* layoutHLabels = new QHBoxLayout();
+    layoutV->addLayout(layoutHLabels);
+    layoutV->addLayout(layoutHTextBrowsers);
+
+    takeOff = new QLabel(this);
+    land = new QLabel(this);
+
+    takeOff->setText("Airplane routes:");
+    land->setText("Airplane state:");
+
+    layoutHLabels->addWidget(takeOff);
+    layoutHLabels->addWidget(land);
+
     takeOffInfo = new QTextBrowser(this);
     landInfo = new QTextBrowser(this);
 
-    takeOffInfo->setWindowTitle("take off");
+    layoutHTextBrowsers->addWidget(takeOffInfo);
+    layoutHTextBrowsers->addWidget(landInfo);
 
+    lblPlaneInfo = new QLabel(this);
+    lblPlaneInfo->setText("Airplane info:");
 
-    layout->addWidget(takeOffInfo);
-    layout->addWidget(landInfo);
+    layoutV->addWidget(lblPlaneInfo);
 
+    tbPlaneInfo = new QTextBrowser(this);
+    tbPlaneInfo->setFixedHeight(50);
+
+    layoutV->addWidget(tbPlaneInfo);
 
     connect(controller, SIGNAL(flightInfo(QString)),
             takeOffInfo, SLOT(append(QString)));
 
     connect(controller, SIGNAL(landingInfo(const QString&, bool)),
             this, SLOT(appendText(const QString&, bool)));
+
+    connect(controller, SIGNAL(airplaneInfo(QString)),
+            this, SLOT(info(QString)));
 }
 
 void Log::appendText(const QString &text, bool crashed)
@@ -39,4 +61,9 @@ void Log::appendText(const QString &text, bool crashed)
         landInfo->setTextColor(Qt::green);
     }
     landInfo->append(text);
+}
+
+void Log::info(const QString &text)
+{
+    tbPlaneInfo->setText(text);
 }
