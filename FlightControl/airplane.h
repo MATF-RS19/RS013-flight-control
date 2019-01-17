@@ -11,7 +11,7 @@
 
 enum class State {FLYING, HOLDING, CRASHED, MANUAL, DANGER};
 
-class Airplane: public QObject, public QGraphicsItem{
+class Airplane: public QObject, public QGraphicsItem {
     Q_OBJECT
 public:
     Airplane(QPointF pos, const QPointF target);
@@ -56,6 +56,8 @@ public slots:
     void update();
     void move();
 
+signals:
+    void finished(const QString&, bool);
 
 private:
     void moveToTarget();

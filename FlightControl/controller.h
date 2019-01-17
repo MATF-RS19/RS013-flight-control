@@ -19,10 +19,15 @@ public:
     Controller(int width, int height);
 
 
+signals:
+    void flightInfo(const QString&);
+    void landingInfo(const QString&, bool);
 
 public slots:
     void update();
     void spawnPlanes();
+    void planeFinished(const QString& s, bool crashed);
+
 
 private:
     QGraphicsScene* scene;

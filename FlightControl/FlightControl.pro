@@ -28,12 +28,14 @@ SOURCES += \
         main.cpp \
     airplane.cpp \
     airport.cpp \
-    controller.cpp
+    controller.cpp \
+    log.cpp
 
 HEADERS += \
     airplane.h \
     airport.h \
-    controller.h
+    controller.h \
+    log.h
 
 FORMS +=
 

@@ -252,11 +252,15 @@ void Airplane::update()
         Airplane* plane = dynamic_cast<Airplane*>(item);
 
         if(plane && plane->state != State::CRASHED){
+
+            QString s = "Flight-" + QString::number(flightNo) + " crashed with "
+                    + "Flight-" + QString::number(plane->flightNo);
+            emit finished(s, true);
+
             plane->setState(State::CRASHED);
             state = State::CRASHED;
             plane->deleteLater();
 
-            qDebug() << flightNo << " crashed with " << plane->flightNo;
         }
     }
 
@@ -264,7 +268,8 @@ void Airplane::update()
     // If the fuel runs out, the plane crashes
     if(fuel <= 0){
         state = State::CRASHED;
-        qDebug() << "Flight-" + QString::number(flightNo) + " ran out of fuel";
+        QString s = "Flight-" + QString::number(flightNo) + " ran out of fuel";
+        emit finished(s, true);
 //        return;
     }
 
@@ -324,7 +329,8 @@ void Airplane::holdingPattern(){
 
 void Airplane::land(){
 
-    qDebug() << "Flight-" + QString::number(flightNo) + " just landed";
+    QString s = "Flight-" + QString::number(flightNo) + " just landed";
+    emit finished(s, false);
     deleteLater();
 }
 

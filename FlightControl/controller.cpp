@@ -13,6 +13,7 @@ Controller::Controller(int width, int height)
     setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
 
+
     setFixedSize(width, height);
 //    fitInView(sceneRect(), Qt::KeepAspectRatio);
     setScene(scene);
@@ -106,8 +107,13 @@ void Controller::mousePressEvent(QMouseEvent *event)
     if(event->button() == Qt::RightButton) {
         auto closest = findClosestAirport(mapToScene(event->pos()));
         Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos());
+        connect(plane, SIGNAL(finished(QString,bool)),
+                this, SLOT(planeFinished(QString,bool)));
         closest->planes.push_back(plane);
         scene->addItem(plane);
+        QString s = "Flight-" + QString::number(plane->flightNo) + " : nowhere "
+                + " --> " + closest->getName();
+        emit flightInfo(s);
 //        qDebug() <<mapToScene(event->pos());
 
     } else if(event->button() == Qt::LeftButton) {
@@ -237,7 +243,9 @@ void Controller::keyPressEvent(QKeyEvent *event)
     }else if(event->key() == Qt::Key_1){
         if(selected_airport1 && selected_airport2){
             Airplane* plane = new Airplane(selected_airport1->pos(), selected_airport2->pos());
-            qDebug() << "Flight-" + QString::number(plane->flightNo) << ":" << selected_airport1->getName() << " --> " << selected_airport2->getName();
+            QString s = "Flight-" + QString::number(plane->flightNo) + " : " +
+                    selected_airport1->getName() + " --> " + selected_airport2->getName();
+            emit flightInfo(s);
             selected_airport2->planes.push_back(plane);
             scene->addItem(plane);
         }
@@ -296,9 +304,18 @@ void Controller::spawnPlanes()
             int targetIdx = (i + randomIdx) % airports.size();
 //            qDebug() << targetIdx;
             Airplane* plane = new Airplane(airports[i]->pos(), airports[targetIdx]->pos());
-            qDebug() << "Flight-" + QString::number(plane->flightNo) << ":" << airports[i]->getName() << " --> " << airports[targetIdx]->getName();
+            connect(plane, SIGNAL(finished(QString,bool)),
+                    this, SLOT(planeFinished(QString,bool)));
+            QString s = "Flight-" + QString::number(plane->flightNo) + " : " + airports[i]->getName()
+                    + " --> " + airports[targetIdx]->getName();
+            emit flightInfo(s);
             airports[targetIdx]->planes.push_back(plane);
             scene->addItem(plane);
     }
 
+}
+
+void Controller::planeFinished(const QString &s, bool crashed)
+{
+    emit landingInfo(s, crashed);
 }
