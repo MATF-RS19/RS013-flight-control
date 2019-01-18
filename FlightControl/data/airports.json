@@ -1,38 +1,104 @@
 {
-	"name" : "Europe",
-	"map" : ":/images/europe.png",
-	"airports" : [
-		{
-			"name" : "Belgrade", 
-			"position" : [312, 391]
-		},
-		{
-			"name" : "London", 
-			"position" : [141, 263]
-		},
-		{
-			"name" : "Moscow", 
-			"position" : [471, 221]
-		},
-		{
-			"name" : "Madrid", 
-			"position" : [72, 414]
-		},
-		{
-			"name" : "Paris", 
-			"position" : [155, 312]
-		},
-		{
-			"name" : "Stockholm", 
-			"position" : [296, 175]
-		},
-		{
-			"name" : "Rome", 
-			"position" : [234, 424]
-		},
-		{
-			"name" : "Berlin", 
-			"position" : [254, 277]
-		}	
-	]
+    "airports": [
+        {
+            "name": "Paris",
+            "position": [
+                497,
+                905
+            ]
+        },
+        {
+            "name": "Kiev",
+            "position": [
+                1290,
+                880
+            ]
+        },
+        {
+            "name": "Warsaw",
+            "position": [
+                1025,
+                830
+            ]
+        },
+        {
+            "name": "Viena",
+            "position": [
+                882,
+                993
+            ]
+        },
+        {
+            "name": "Belgrade",
+            "position": [
+                1001,
+                1135
+            ]
+        },
+        {
+            "name": "Stockholm",
+            "position": [
+                949,
+                508
+            ]
+        },
+        {
+            "name": "Reykjavik",
+            "position": [
+                270,
+                103
+            ]
+        },
+        {
+            "name": "London",
+            "position": [
+                452,
+                763
+            ]
+        },
+        {
+            "name": "Rome",
+            "position": [
+                750,
+                1231
+            ]
+        },
+        {
+            "name": "Athens",
+            "position": [
+                1108,
+                1421
+            ]
+        },
+        {
+            "name": "Madrid",
+            "position": [
+                231,
+                1201
+            ]
+        },
+        {
+            "name": "Berlin",
+            "position": [
+                814,
+                804
+            ]
+        },
+        {
+            "name": "Ankara",
+            "position": [
+                1432,
+                1328
+            ]
+        },
+        {
+            "name": "Moscow",
+            "position": [
+                1511,
+                641
+            ]
+        }
+    ],
+    "map": ":/images/europe.png",
+    "name": "Europe"
 }

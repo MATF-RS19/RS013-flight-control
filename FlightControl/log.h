@@ -6,12 +6,16 @@
 #include <QLabel>
 #include <QTextBrowser>
 
+class Controller;
+
 class Log : public QFrame
 {
     Q_OBJECT
 
 public:
     Log(Controller *controller);
+
+    QTextEdit *txtEdit;
 
 public Q_SLOTS:
     void appendText(const QString& text, bool landed);
@@ -26,6 +30,8 @@ private:
 
     QLabel *lblPlaneInfo;
     QTextBrowser *tbPlaneInfo;
+
+    QLabel *lblAirportName;
 };
 
 #endif // LOG_H

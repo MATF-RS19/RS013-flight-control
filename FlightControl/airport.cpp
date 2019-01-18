@@ -6,7 +6,7 @@ Airport::Airport(QString name)
     setRect(0,0,20,20);
 
     radarRadius = 100;
-    occupied = false;
+    selected = false;
 
     // Call update() every 50 miliseconds
     timer = new QTimer();
@@ -37,13 +37,29 @@ void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     painter->drawText(0, -10, name);
 
 
-    if(isSelected())
+    if(selected)
         painter->drawRect(boundingRect());
+
 }
 
 QString Airport::getName()
 {
     return name;
+}
+
+bool Airport::isSelected()
+{
+    return selected;
+}
+
+void Airport::select()
+{
+    selected = true;
+}
+
+void Airport::deselect()
+{
+    selected = false;
 }
 
 void Airport::update()

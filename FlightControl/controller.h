@@ -12,6 +12,10 @@
 #include <QHBoxLayout>
 #include "airplane.h"
 #include "airport.h"
+#include "log.h"
+
+
+class Log;
 
 class Controller : public QGraphicsView{
 
@@ -33,6 +37,9 @@ public slots:
 
 
 private:
+
+    Log *log;
+
     QGraphicsScene* scene;
     QVector<Airport*> airports;
 
@@ -46,6 +53,8 @@ private:
 
     void run(int width, int height);
 
+    void saveAirportData(QString file);
+
     void mousePressEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
     void keyPressEvent(QKeyEvent* event);
@@ -53,6 +62,7 @@ private:
 
     int scaleCounter;
     int planeCounter;
+    bool buildAirport;
 
     double originX;
     double originY;

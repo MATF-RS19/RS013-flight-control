@@ -39,6 +39,10 @@ Controller::Controller(int width, int height)
 
     scaleCounter = 0;
     planeCounter = 0;
+    buildAirport = false;
+
+    log = new Log(this);
+    log->show();
 
     run(width, height);
 }
@@ -76,11 +80,11 @@ void Controller::run(int width, int height)
         QJsonObject airport = array[i].toObject();
         airports.push_back(new Airport(airport["name"].toString()));
         QJsonArray position = airport["position"].toArray();
-        QPoint pos(position[0].toInt(), position[1].toInt());
-        airports[i]->setPos(mapToScene(pos));
+        QPoint pos(position[0].toDouble(), position[1].toDouble());
+        airports[i]->setPos(pos);
 
 //        QPointF tmp = mapToScene(pos);
-        airports[i]->setFlag(QGraphicsItem::ItemIsSelectable, true);
+//        airports[i]->setFlag(QGraphicsItem::ItemIsSelectable, true);
         scene->addItem(airports[i]);
 //        scene->addEllipse(tmp.x()-airports[i]->radarRadius/2, tmp.y()-airports[i]->radarRadius/2, airports[i]->radarRadius,airports[i]->radarRadius);
     }
@@ -109,6 +113,42 @@ void Controller::run(int width, int height)
     show();
 }
 
+void Controller::saveAirportData(QString file)
+{
+    QFile f(file);
+    f.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    QString val = f.readAll();
+    f.close();
+    QJsonDocument doc = QJsonDocument::fromJson(val.toUtf8());
+//                qDebug() << doc;
+
+    QJsonObject jsonObj = doc.object();
+    QJsonArray arr;
+
+    for(Airport* a : airports){
+
+        QJsonObject newAirport;
+        newAirport.insert("name", a->getName());
+        QPointF p(a->pos());
+
+        QJsonArray newArr;
+        newArr.push_back(p.x());
+        newArr.push_back(p.y());
+        newAirport.insert("position", newArr);
+
+        arr.append(newAirport);
+    }
+
+    jsonObj.insert("airports", arr);
+
+    QJsonDocument d(jsonObj);
+//                qDebug() << d.toJson();
+
+    f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text);
+    f.write(d.toJson());
+}
+
 static double distanceSquared(QPointF p, QPointF q)
 {
     return (p.x() - q.x()) * (p.x() - q.x()) + (p.y() - q.y()) * (p.y() - q.y());
@@ -128,18 +168,37 @@ Airport* Controller::findClosestAirport(const QPointF& airplanePos)
 
 void Controller::mousePressEvent(QMouseEvent *event)
 {
-    // Spawn a new airplane on the clicked location (this is for testing purposes)
+    // Spawn a new airplane (or an airport) on the clicked location (this is for testing purposes)
     if(event->button() == Qt::RightButton) {
-        auto closest = findClosestAirport(mapToScene(event->pos()));
-        Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos());
-        connect(plane, SIGNAL(finished(QString,bool)),
-                this, SLOT(planeFinished(QString,bool)));
-        closest->planes.push_back(plane);
-        scene->addItem(plane);
-        QString s = "Flight-" + QString::number(plane->flightNo) + " : nowhere "
-                + " --> " + closest->getName();
-        emit flightInfo(s);
-//        qDebug() <<mapToScene(event->pos());
+
+        if(!buildAirport){
+
+            Airport* closest;
+            if(selected_airport2) closest = selected_airport2;
+            else if(selected_airport1) closest = selected_airport1;
+            else closest = findClosestAirport(mapToScene(event->pos()));
+
+            Airplane* plane = new Airplane(mapToScene(event->pos()), closest->pos());
+            connect(plane, SIGNAL(finished(QString,bool)),
+                    this, SLOT(planeFinished(QString,bool)));
+            closest->planes.push_back(plane);
+            scene->addItem(plane);
+            QString s = "Flight-" + QString::number(plane->flightNo) + " : nowhere "
+                    + " --> " + closest->getName();
+            emit flightInfo(s);
+    //        qDebug() <<mapToScene(event->pos());
+
+        }else{
+
+            QString name(log->txtEdit->toPlainText());
+            Airport* port = new Airport(name);
+            port->setPos(mapToScene(event->pos()));
+//            port->setFlag(QGraphicsItem::ItemIsSelectable, true);
+            airports.push_back(port);
+            scene->addItem(port);
+
+
+        }
 
     } else if(event->button() == Qt::LeftButton) {
 
@@ -149,11 +208,11 @@ void Controller::mousePressEvent(QMouseEvent *event)
                 if(!selected_airport1){
                     qDebug() << "Selected airport: " << airport->getName();
                     selected_airport1 = airport;
-                    selected_airport1->setSelected(true);
+                    selected_airport1->select();
                 }else if(selected_airport1 != airport && !selected_airport2){
                     qDebug() << "Selected airport: " << airport->getName();
                     selected_airport2 = airport;
-                    selected_airport2->setSelected(true);
+                    selected_airport2->select();
                 }
                 return;
             }
@@ -181,11 +240,11 @@ void Controller::mousePressEvent(QMouseEvent *event)
         }
 
         if(selected_airport1){
-            selected_airport1->setSelected(false);
+            selected_airport1->deselect();
             selected_airport1 = nullptr;
         }
         if(selected_airport2){
-            selected_airport2->setSelected(false);
+            selected_airport2->deselect();
             selected_airport2 = nullptr;
         }
 
@@ -199,13 +258,15 @@ void Controller::mousePressEvent(QMouseEvent *event)
 
 void Controller::mouseMoveEvent(QMouseEvent *event)
 {
-    emit airplaneInfo(QString());
-    for(auto& item: scene->items()) {
-        if(item->sceneBoundingRect().contains(mapToScene(event->pos()))) {
-            Airplane* plane = dynamic_cast<Airplane*>(item);
-            if(plane) {
-                QString s = "Flight-" + QString::number(plane->flightNo) + ", fuel left: " + QString::number(plane->getFuel());
-                emit airplaneInfo(s);
+    if(!focused_plane){
+        emit airplaneInfo(QString());
+        for(auto& item: scene->items()) {
+            if(item->sceneBoundingRect().contains(mapToScene(event->pos()))) {
+                Airplane* plane = dynamic_cast<Airplane*>(item);
+                if(plane) {
+                    QString s = "Flight-" + QString::number(plane->flightNo) + ", fuel left: " + QString::number(plane->getFuel()) + ", Control: AUTO";
+                    emit airplaneInfo(s);
+                }
             }
         }
     }
@@ -292,6 +353,54 @@ void Controller::keyPressEvent(QKeyEvent *event)
     }else if(event->key() == Qt::Key_3){
         if(--planeCounter < -1) planeCounter = Airplane::data.size()-1;
         qDebug() << "Selected plane type " << planeCounter << "(-1 for auto)";
+
+    }else if(event->key() == Qt::Key_B){
+        buildAirport = !buildAirport;
+        if(buildAirport)
+            qDebug() << "Create airport ";
+        else
+            qDebug() << "Create airplane ";
+
+    }else if(event->key() == Qt::Key_S){
+
+        saveAirportData("../FlightControl/data/airports.json");
+        qDebug() << "Saved";
+
+    }else if(event->key() == Qt::Key_D){
+
+        if(focused_plane){
+            qDebug() << "Deleted flight-" + QString::number(focused_plane->flightNo);
+            focused_plane->deleteLater();
+            focused_plane = nullptr;
+        }
+
+        if(selected_airport1){
+            qDebug() << "Deleted airport " + selected_airport1->getName();
+            airports.erase(std::remove(airports.begin(), airports.end(), selected_airport1));
+            for(Airplane* p : selected_airport1->planes){
+                Airport* closest = findClosestAirport(p->pos());
+                closest->planes.push_back(p);
+                p->setTarget(closest->pos());
+            }
+        }
+        if(selected_airport2){
+            qDebug() << "Deleted airport " + selected_airport2->getName();
+            airports.erase(std::remove(airports.begin(), airports.end(), selected_airport2));
+            for(Airplane* p : selected_airport2->planes){
+                Airport* closest = findClosestAirport(p->pos());
+                closest->planes.push_back(p);
+                p->setTarget(closest->pos());
+            }
+        }
+
+        if(selected_airport1){
+            selected_airport1->deleteLater();
+        }
+        if(selected_airport2){
+            selected_airport2->deleteLater();
+        }
+        selected_airport1 = nullptr;
+        selected_airport2 = nullptr;
     }
 }
 
@@ -319,6 +428,7 @@ void Controller::wheelEvent(QWheelEvent *event)
 
 void Controller::update()
 {
+    scene->update(sceneRect());
 
     if(focused_plane){
         originX = viewport()->size().width()/2;
@@ -329,6 +439,11 @@ void Controller::update()
         QPointF translation = oldp - newp;
 
         translate(translation.x(), translation.y());
+
+        emit airplaneInfo(QString());
+        QString s = "Flight-" + QString::number(focused_plane->flightNo) + ", fuel left: " + QString::number(focused_plane->getFuel()) + ", Control: MANUAL";
+        emit airplaneInfo(s);
+
     }
 }
 

@@ -25,6 +25,10 @@ public:
 
     QString getName();
 
+    bool isSelected();
+    void select();
+    void deselect();
+
 public slots:
     void update();
 
@@ -35,7 +39,7 @@ private:
 
     void schedule();
 
-    bool occupied;
+    bool selected;
 
     QTimer* timer;
 

@@ -124,6 +124,8 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
     painter->setBrush(QColor(r, g, b));
     painter->drawRect(-15, 30, static_cast<int>(30 * fuelRatio), 5);
 
+
+
 }
 
 State Airplane::getState()

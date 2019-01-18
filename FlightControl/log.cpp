@@ -39,9 +39,18 @@ Log::Log(Controller *controller)
     layoutV->addWidget(lblPlaneInfo);
 
     tbPlaneInfo = new QTextBrowser(this);
-    tbPlaneInfo->setFixedHeight(50);
+    tbPlaneInfo->setFixedHeight(30);
 
     layoutV->addWidget(tbPlaneInfo);
+
+    lblAirportName = new QLabel(this);
+    lblAirportName->setText("Text input:");
+    layoutV->addWidget(lblAirportName);
+
+    txtEdit = new QTextEdit(this);
+    txtEdit->setFixedHeight(30);
+    layoutV->addWidget(txtEdit);
+
 
     connect(controller, SIGNAL(flightInfo(QString)),
             takeOffInfo, SLOT(append(QString)));
@@ -51,6 +60,8 @@ Log::Log(Controller *controller)
 
     connect(controller, SIGNAL(airplaneInfo(QString)),
             this, SLOT(info(QString)));
+
+
 }
 
 void Log::appendText(const QString &text, bool crashed)
