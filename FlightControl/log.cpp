@@ -2,6 +2,7 @@
 
 #include <QLabel>
 #include <QHBoxLayout>
+#include <QPushButton>
 
 Log::Log(Controller *controller)
     : QFrame()
@@ -44,13 +45,22 @@ Log::Log(Controller *controller)
     layoutV->addWidget(tbPlaneInfo);
 
     lblAirportName = new QLabel(this);
-    lblAirportName->setText("Text input:");
+    lblAirportName->setText("Airplane name:");
     layoutV->addWidget(lblAirportName);
 
+    auto* layoutAirport = new QHBoxLayout();
     txtEdit = new QTextEdit(this);
     txtEdit->setFixedHeight(30);
-    layoutV->addWidget(txtEdit);
+    layoutAirport->addWidget(txtEdit);
 
+    btnSave = new QPushButton();
+    btnSave->setText("Save");
+    layoutAirport->addWidget(btnSave);
+
+    layoutV->addLayout(layoutAirport);
+
+    connect(btnSave, SIGNAL(clicked(bool)),
+            this, SLOT(checkIfClicked()));
 
     connect(controller, SIGNAL(flightInfo(QString)),
             takeOffInfo, SLOT(append(QString)));
@@ -77,4 +87,10 @@ void Log::appendText(const QString &text, bool crashed)
 void Log::info(const QString &text)
 {
     tbPlaneInfo->setText(text);
+}
+
+void Log::checkIfClicked()
+{
+    txtEdit->clear();
+    emit isClicked();
 }

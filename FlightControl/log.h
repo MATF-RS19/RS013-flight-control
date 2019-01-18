@@ -5,6 +5,7 @@
 #include <QFrame>
 #include <QLabel>
 #include <QTextBrowser>
+#include <QPushButton>
 
 class Controller;
 
@@ -17,9 +18,13 @@ public:
 
     QTextEdit *txtEdit;
 
+signals:
+    void isClicked();
+
 public Q_SLOTS:
     void appendText(const QString& text, bool landed);
     void info(const QString& text);
+    void checkIfClicked();
 
 private:
     QLabel *takeOff;
@@ -32,6 +37,8 @@ private:
     QTextBrowser *tbPlaneInfo;
 
     QLabel *lblAirportName;
+
+    QPushButton *btnSave;
 };
 
 #endif // LOG_H

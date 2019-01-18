@@ -44,6 +44,9 @@ Controller::Controller(int width, int height)
     log = new Log(this);
     log->show();
 
+    connect(log, SIGNAL(isClicked()),
+            this, SLOT(save()));
+
     run(width, height);
 }
 
@@ -363,8 +366,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
 
     }else if(event->key() == Qt::Key_S){
 
-        saveAirportData("../FlightControl/data/airports.json");
-        qDebug() << "Saved";
+        save();
 
     }else if(event->key() == Qt::Key_D){
 
@@ -481,4 +483,10 @@ void Controller::spawnPlanes()
 void Controller::planeFinished(const QString &s, bool crashed)
 {
     emit landingInfo(s, crashed);
+}
+
+void Controller::save()
+{
+    saveAirportData("../FlightControl/data/airports.json");
+    qDebug() << "Saved";
 }

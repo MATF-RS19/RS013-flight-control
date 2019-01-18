@@ -34,6 +34,7 @@ public slots:
     void update();
     void spawnPlanes();
     void planeFinished(const QString& s, bool crashed);
+    void save();
 
 
 private:
