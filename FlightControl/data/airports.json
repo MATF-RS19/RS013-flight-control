@@ -1,24 +1,10 @@
 {
     "airports": [
         {
-            "name": "Ankara",
+            "name": "Warsaw",
             "position": [
-                1432,
-                1328
-            ]
-        },
-        {
-            "name": "Moscow",
-            "position": [
-                1511,
-                641
-            ]
-        },
-        {
-            "name": "Paris",
-            "position": [
-                497,
-                905
+                1025,
+                830
             ]
         },
         {
@@ -29,24 +15,17 @@
             ]
         },
         {
-            "name": "Madrid",
+            "name": "London",
             "position": [
-                231,
-                1201
+                452,
+                763
             ]
         },
         {
-            "name": "Dublin",
+            "name": "Moscow",
             "position": [
-                301,
-                673
-            ]
-        },
-        {
-            "name": "Vienna",
-            "position": [
-                882,
-                993
+                1511,
+                641
             ]
         },
         {
@@ -57,38 +36,10 @@
             ]
         },
         {
-            "name": "Athens",
+            "name": "Paris",
             "position": [
-                1108,
-                1421
-            ]
-        },
-        {
-            "name": "London",
-            "position": [
-                452,
-                763
-            ]
-        },
-        {
-            "name": "Warsaw",
-            "position": [
-                1025,
-                830
-            ]
-        },
-        {
-            "name": "Rome",
-            "position": [
-                750,
-                1231
-            ]
-        },
-        {
-            "name": "Belgrade",
-            "position": [
-                1001,
-                1135
+                497,
+                905
             ]
         },
         {
@@ -99,10 +50,59 @@
             ]
         },
         {
+            "name": "Vienna",
+            "position": [
+                882,
+                993
+            ]
+        },
+        {
+            "name": "Ankara",
+            "position": [
+                1432,
+                1328
+            ]
+        },
+        {
+            "name": "Dublin",
+            "position": [
+                301,
+                673
+            ]
+        },
+        {
             "name": "Stockholm",
             "position": [
                 949,
                 508
+            ]
+        },
+        {
+            "name": "Madrid",
+            "position": [
+                231,
+                1201
+            ]
+        },
+        {
+            "name": "Belgrade",
+            "position": [
+                1001,
+                1135
+            ]
+        },
+        {
+            "name": "Rome",
+            "position": [
+                750,
+                1231
+            ]
+        },
+        {
+            "name": "Athens",
+            "position": [
+                1108,
+                1421
             ]
         }
     ],

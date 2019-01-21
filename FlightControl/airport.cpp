@@ -34,8 +34,10 @@ void Airport::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     QFont font = painter->font();
     font.setPointSize(font.pointSize() * 2);
     painter->setFont(font);
-    painter->drawText(0, -10, name);
 
+    if(selected)
+        painter->setPen(Qt::green);
+    painter->drawText(0, -10, name);
 
     if(selected)
         painter->drawRect(boundingRect());

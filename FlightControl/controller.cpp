@@ -209,11 +209,11 @@ void Controller::mousePressEvent(QMouseEvent *event)
             // Check if this airport is clicked
             if(airport->sceneBoundingRect().contains((mapToScene(event->pos())))){
                 if(!selected_airport1){
-                    qDebug() << "Selected airport: " << airport->getName();
+//                    qDebug() << "Selected airport: " << airport->getName();
                     selected_airport1 = airport;
                     selected_airport1->select();
                 }else if(selected_airport1 != airport && !selected_airport2){
-                    qDebug() << "Selected airport: " << airport->getName();
+//                    qDebug() << "Selected airport: " << airport->getName();
                     selected_airport2 = airport;
                     selected_airport2->select();
                 }
@@ -230,8 +230,8 @@ void Controller::mousePressEvent(QMouseEvent *event)
 
                     focused_plane = plane;
 
-                    focused_plane->setState(State::MANUAL);
-                    qDebug() << "Manual control of flight " << focused_plane->flightNo;
+                    //focused_plane->setState(State::MANUAL);
+                    //qDebug() << "Manual control of flight " << focused_plane->flightNo;
                     return;
                 }
             }
@@ -290,54 +290,50 @@ void Controller::keyPressEvent(QKeyEvent *event)
 {
     if(event->key() == Qt::Key_Left){
 
-        if(!focused_plane){
-            qDebug() << "No plane is focused";
-            return;
-        }
-        focused_plane->steer(-focused_plane->maxAngle);
+       if(focused_plane && focused_plane->getState() == State::MANUAL){
+            focused_plane->steer(-focused_plane->maxAngle);
+       }
 
     }else if(event->key() == Qt::Key_Right){
 
-        if(!focused_plane){
-            qDebug() << "No plane is focused";
-            return;
+        if(focused_plane && focused_plane->getState() == State::MANUAL){
+             focused_plane->steer(focused_plane->maxAngle);
         }
-        focused_plane->steer(focused_plane->maxAngle);
 
     }else if(event->key() == Qt::Key_Up){
 
-        if(!focused_plane){
-            qDebug() << "No plane is focused";
-            return;
-        }
-        if(focused_plane->getState() != State::CRASHED)
+        if(focused_plane && focused_plane->getState() != State::CRASHED)
             focused_plane->setState(State::FLYING);
 
         focused_plane = nullptr;
 
     }else if(event->key() == Qt::Key_Down){
 
-        if(!focused_plane){
-            qDebug() << "No plane is focused";
-            return;
+        if(focused_plane && focused_plane->getState() == State::MANUAL){
+            // land on selected airport or automaticaly find a nearest airport to land
+            auto closest = selected_airport1 ? (Airport*)selected_airport1 : findClosestAirport(focused_plane->pos());
+            // Move this plane from previous target airport to closest airport
+            auto targetPos = focused_plane->getTarget();
+            auto currentTargetIt = std::find_if(airports.begin(), airports.end(),
+                                                  [targetPos](Airport* a){return a->pos() == targetPos;});
+            Airport* currentTarget = *currentTargetIt;
+            currentTarget->planes.erase(std::remove(currentTarget->planes.begin(), currentTarget->planes.end(), focused_plane));
+
+            closest->planes.push_back(focused_plane);
+
+            focused_plane->setTarget(closest->pos());
+
+            closest->currentPlane = focused_plane;
+            focused_plane->setState(State::FLYING);
+            focused_plane = nullptr;
         }
 
-        // land on selected airport or automaticaly find a nearest airport to land
-        auto closest = selected_airport1 ? (Airport*)selected_airport1 : findClosestAirport(focused_plane->pos());
-        // Move this plane from previous target airport to closest airport
-        auto targetPos = focused_plane->getTarget();
-        auto currentTargetIt = std::find_if(airports.begin(), airports.end(),
-                                              [targetPos](Airport* a){return a->pos() == targetPos;});
-        Airport* currentTarget = *currentTargetIt;
-        currentTarget->planes.erase(std::remove(currentTarget->planes.begin(), currentTarget->planes.end(), focused_plane));
+    }else if(event->key() == Qt::Key_F){
 
-        closest->planes.push_back(focused_plane);
-
-        focused_plane->setTarget(closest->pos());
-
-        closest->currentPlane = focused_plane;
-        focused_plane->setState(State::FLYING);
-        focused_plane = nullptr;
+        if(focused_plane){
+            if(focused_plane->getState() == State::MANUAL) focused_plane->setState(State::FLYING);
+            else focused_plane->setState(State::MANUAL);
+        }
 
     }else if(event->key() == Qt::Key_1){
         if(selected_airport1 && selected_airport2){
@@ -443,7 +439,8 @@ void Controller::update()
         translate(translation.x(), translation.y());
 
         emit airplaneInfo(QString());
-        QString s = "Flight-" + QString::number(focused_plane->flightNo) + ", fuel left: " + QString::number(focused_plane->getFuel()) + ", Control: MANUAL";
+        QString s = "Flight-" + QString::number(focused_plane->flightNo) + ", fuel left: " + QString::number(focused_plane->getFuel()) + ", Control: " +
+                ((focused_plane->getState() == State::MANUAL) ? "MANUAL" : "AUTO");
         emit airplaneInfo(s);
 
     }
