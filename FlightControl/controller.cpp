@@ -305,7 +305,7 @@ void Controller::keyPressEvent(QKeyEvent *event)
         if(focused_plane && focused_plane->getState() != State::CRASHED)
             focused_plane->setState(State::FLYING);
 
-        focused_plane = nullptr;
+        //focused_plane = nullptr;
 
     }else if(event->key() == Qt::Key_Down){
 

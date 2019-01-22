@@ -45,7 +45,7 @@ Log::Log(Controller *controller)
     layoutV->addWidget(tbPlaneInfo);
 
     lblAirportName = new QLabel(this);
-    lblAirportName->setText("Airplane name:");
+    lblAirportName->setText("Airport name:");
     layoutV->addWidget(lblAirportName);
 
     auto* layoutAirport = new QHBoxLayout();
