@@ -104,27 +104,31 @@ QPainterPath Airplane::shape() const
 void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     painter->setRenderHint(QPainter::Antialiasing);
-    QPixmap img(image);
-//    painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
-//    painter->fillRect(img.rect(), Qt::red);
-    painter->drawPixmap(-20, -20, 40, 50, img);
+    // if it is far away, the plane is drawn just as a circle
+    if(QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform()) < 0.5) {
+        painter->setBrush(Qt::red);
+        painter->drawEllipse(0, 0, 20, 20);
+    } else {
+        QPixmap img(image);
+    //    painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
+    //    painter->fillRect(img.rect(), Qt::red);
+        painter->drawPixmap(-20, -20, 40, 50, img);
 
-    painter->drawRect(-15, 30, 30, 5);
-    if(state == State::DANGER) painter->setBrush(Qt::red);
-    else if (state == State::FLYING) painter->setBrush(Qt::green);
-    else if (state == State::HOLDING) painter->setBrush(Qt::yellow);
-    else if (state == State::MANUAL) painter->setBrush(Qt::blue);
-    else painter->setBrush(Qt::black);
-    painter->drawEllipse(20, 30, 10, 10);
+        painter->drawRect(-15, 30, 30, 5);
+        if(state == State::DANGER) painter->setBrush(Qt::red);
+        else if (state == State::FLYING) painter->setBrush(Qt::green);
+        else if (state == State::HOLDING) painter->setBrush(Qt::yellow);
+        else if (state == State::MANUAL) painter->setBrush(Qt::blue);
+        else painter->setBrush(Qt::black);
+        painter->drawEllipse(20, 30, 10, 10);
 
-    double fuelRatio = fuel / fuelCap;
-    int r = static_cast<int>(255.0 * (1 - fuelRatio));
-    int g = static_cast<int>(255.0 * fuelRatio);
-    int b = 0;
-    painter->setBrush(QColor(r, g, b));
-    painter->drawRect(-15, 30, static_cast<int>(30 * fuelRatio), 5);
-
-
+        double fuelRatio = fuel / fuelCap;
+        int r = static_cast<int>(255.0 * (1 - fuelRatio));
+        int g = static_cast<int>(255.0 * fuelRatio);
+        int b = 0;
+        painter->setBrush(QColor(r, g, b));
+        painter->drawRect(-15, 30, static_cast<int>(30 * fuelRatio), 5);
+    }
 
 }
 

@@ -63,10 +63,10 @@ Log::Log(Controller *controller)
             this, SLOT(checkIfClicked()));
 
     connect(controller, SIGNAL(flightInfo(QString)),
-            takeOffInfo, SLOT(append(QString)));
+            this, SLOT(appendTakeOffInfo(QString)));
 
     connect(controller, SIGNAL(landingInfo(const QString&, bool)),
-            this, SLOT(appendText(const QString&, bool)));
+            this, SLOT(appendLandInfo(const QString&, bool)));
 
     connect(controller, SIGNAL(airplaneInfo(QString)),
             this, SLOT(info(QString)));
@@ -74,14 +74,19 @@ Log::Log(Controller *controller)
 
 }
 
-void Log::appendText(const QString &text, bool crashed)
+void Log::appendTakeOffInfo(const QString &text)
+{
+    takeOffInfo->append(text + " - " + QTime::currentTime().toString());
+}
+
+void Log::appendLandInfo(const QString &text, bool crashed)
 {
     if(crashed) {
         landInfo->setTextColor(Qt::red);
     } else {
         landInfo->setTextColor(Qt::green);
     }
-    landInfo->append(text);
+    landInfo->append(text + " - " + QTime::currentTime().toString());
 }
 
 void Log::info(const QString &text)

@@ -22,7 +22,8 @@ signals:
     void isClicked();
 
 public Q_SLOTS:
-    void appendText(const QString& text, bool landed);
+    void appendLandInfo(const QString& text, bool landed);
+    void appendTakeOffInfo(const QString& text);
     void info(const QString& text);
     void checkIfClicked();
 

@@ -44,9 +44,9 @@ private:
     QGraphicsScene* scene;
     QVector<Airport*> airports;
 
-    QPointer<Airplane> focused_plane;
-    QPointer<Airport> selected_airport1;
-    QPointer<Airport> selected_airport2;
+    QPointer<Airplane> focusedPlane;
+    QPointer<Airport> selectedAirport1;
+    QPointer<Airport> selectedAirport2;
 
 
     const static int width;

@@ -1,4 +1,5 @@
 ﻿#include "airport.h"
+#include <random>
 
 Airport::Airport(QString name)
     : name(name)
@@ -112,13 +113,17 @@ void Airport::localSearch(QVector<QPointer<Airplane>>& planesInRadar)
                         return p1->getWastedFuel() > p2->getWastedFuel();
                     }
               );
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
+    std::uniform_int_distribution<int> randomDiscrete(0, planesInRadar.size() - 2);
 
     auto current = planesInRadar;
     double currentSolution = solutionValue(current);
     auto best = current;
     double bestSolution = currentSolution;
     for(int i = 0; i < 50; i++) {
-        int index = std::rand() % (planesInRadar.size() - 1);
+        int index = randomDiscrete(gen);
         auto tmp = current;
         std::swap(tmp[index], tmp[index + 1]);
         double tmpSolution = solutionValue(tmp);
