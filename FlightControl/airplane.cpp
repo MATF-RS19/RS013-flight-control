@@ -37,7 +37,13 @@ double Airplane::calculateAngle()
 
 Airplane::Airplane(QPointF pos, const QPointF target, int t)
     : type(t == -1 ? nOfPlanes % data.size() : t),
-      image(data[type].image), speed(data[type].speed), maxAngle(data[type].maxAngle), fuelCap(data[type].fuelCap), fuelUse(data[type].fuelUse)
+      image(data[type].image),
+      speed(data[type].speed),
+      maxAngle(data[type].maxAngle),
+      fuelCap(data[type].fuelCap),
+      fuelUse(data[type].fuelUse),
+      origin(std::move(pos)),
+      target(std::move(target))
 {
     setPos(pos);
 
@@ -46,8 +52,8 @@ Airplane::Airplane(QPointF pos, const QPointF target, int t)
     stillDangerous = false;
 
     // Plane is flying from pos to target, and spawns with some fuel
-    setOrigin(pos);
-    setTarget(target);
+//    setOrigin(pos);
+//    setTarget(target);
     fuel = fuelCap;
     state = State::FLYING;
 
@@ -105,7 +111,8 @@ void Airplane::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidge
 {
     painter->setRenderHint(QPainter::Antialiasing);
     // if it is far away, the plane is drawn just as a circle
-    if(QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform()) < 0.5) {
+    double detail = QStyleOptionGraphicsItem::levelOfDetailFromTransform(painter->worldTransform());
+    if(detail < 0.6) {
         painter->setBrush(Qt::red);
         painter->drawEllipse(0, 0, 20, 20);
     } else {

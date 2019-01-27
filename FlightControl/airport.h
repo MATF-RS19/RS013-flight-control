@@ -34,7 +34,7 @@ public slots:
 
 private:
 
-    double radarRadius;
+    static const double radarRadius;
     QString name;
 
     void schedule();

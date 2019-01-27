@@ -1,19 +1,19 @@
 ﻿#include "airport.h"
 #include <random>
 
+const double Airport::radarRadius(100);
+
 Airport::Airport(QString name)
-    : name(name)
+    : name(std::move(name))
 {
     setRect(0,0,20,20);
 
-    radarRadius = 100;
     selected = false;
 
     // Call update() every 50 miliseconds
     timer = new QTimer();
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
     timer->start(50);
-
 }
 
 Airport::~Airport()
@@ -146,7 +146,7 @@ void Airport::schedule()
     QVector<QPointer<Airplane>> planesInRadar;
     std::copy_if(planes.begin(), planes.end(),
                  std::back_inserter(planesInRadar),
-                 [this](const QPointer<Airplane>& p){
+                 [](const QPointer<Airplane>& p){
                     return p->getDistance() < radarRadius
                            && p->getState() != State::MANUAL
                            && p->getState() != State::DANGER; });
